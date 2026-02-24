@@ -86,14 +86,18 @@ document.addEventListener("DOMContentLoaded", () => {
       .sort((a, b) => a.dateObj - b.dateObj);
 
     if (upcomingExams.length === 0) {
-      ddaySummaryEl.innerText = "시험 일정이 없습니디리링😧";
+      ddaySummaryEl.innerText = "시험 일정이 없어요.";
       return;
     }
 
-    const nextExam = upcomingExams[0];
-    const dayDiff = Math.round((nextExam.dateObj - today) / (1000 * 60 * 60 * 24));
-    const ddayLabel = dayDiff === 0 ? "D-Day" : `D-${dayDiff}`;
-    ddaySummaryEl.innerText = `${ddayLabel} | ${nextExam.name}`;
+    ddaySummaryEl.innerHTML = upcomingExams
+      .slice(0, 5)
+      .map(exam => {
+        const dayDiff = Math.round((exam.dateObj - today) / (1000 * 60 * 60 * 24));
+        const ddayLabel = dayDiff === 0 ? "D-Day" : `D-${dayDiff}`;
+        return `<div>${ddayLabel} | ${exam.name}</div>`;
+      })
+      .join("");
   }
 
   function persistAll() {
@@ -110,11 +114,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function applyCalendarAction(action, dateStr) {
     if (action === "study") {
-      const text = prompt("공부 일정 내용을 입력하세됴:");
+      const text = prompt("공부 일정 내용을 입력하세요:");
       if (!text || !text.trim()) return;
       schedules[dateStr] = text.trim();
     } else if (action === "exam") {
-      const text = prompt("시험 이름을 입력하세됴:");
+      const text = prompt("시험 이름을 입력하세요:");
       if (!text || !text.trim()) return;
       exams[dateStr] = text.trim();
     } else if (action === "delete") {

@@ -110,6 +110,25 @@ function updateStudyTimerDisplay() {
   displayButton.title = studyTimerState.isRunning
     ? "클릭하면 일시정지 여부를 물어봐요"
     : "클릭하면 다시 시작할지 물어봐요";
+
+  updateStudyTimerActionButton();
+}
+
+function updateStudyTimerActionButton() {
+  const actionButton = document.getElementById("studyTimerActionBtn");
+  if (!actionButton) return;
+
+  if (studyTimerState.isRunning) {
+    actionButton.innerText = "순공 타이머 일시정지";
+    return;
+  }
+
+  if ((studyTimerState.elapsedMs || 0) > 0) {
+    actionButton.innerText = "순공 타이머 이어하기";
+    return;
+  }
+
+  actionButton.innerText = "순공 타이머 시작";
 }
 
 function stopStudyTimerTick() {
@@ -153,6 +172,17 @@ function pauseStudyTimer() {
   updateStudyTimerDisplay();
 }
 
+function handleStudyTimerActionButtonClick() {
+  ensureStudyTimerDate();
+
+  if (studyTimerState.isRunning) {
+    pauseStudyTimer();
+    return;
+  }
+
+  startStudyTimer();
+}
+
 function handleTimerDisplayClick() {
   ensureStudyTimerDate();
 
@@ -190,13 +220,16 @@ function endStudySession() {
 
   const studyTime = getTodayStudyTimeStore();
   studyTime[today] = (studyTime[today] || 0) + elapsedMs;
+  const todayTotalMs = studyTime[today];
   localStorage.setItem("studyTime", JSON.stringify(studyTime));
 
   resetStudyTimerStateForToday();
   stopStudyTimerTick();
   updateStudyTimerDisplay();
 
-  alert(`오늘 순공시간 ${formatDuration(elapsedMs)} 저장 완료! 캘린더에서 확인할 수 있습니듀😄`);
+  alert(
+    `이번 순공 ${formatDuration(elapsedMs)} 저장 완료!\n오늘 누적 순공 ${formatDuration(todayTotalMs)} (캘린더 반영)`
+  );
 }
 
 function markAttendanceAndGoCalendar() {
