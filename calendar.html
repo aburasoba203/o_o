@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>공부 캘린더</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="calendar-page">
+  <div class="container calendar-container">
+    <h1>공부 캘린더</h1>
+    <div id="ddaySummary" class="dday-summary">시험 일정이 없습니디리링.</div>
+    <p class="calendar-help">날짜를 더블클릭하면 공부/시험 일정을 추가할 수 있습니두.</p>
+    <div id="calendar"></div>
+    <div class="bottom-controls">
+      <button onclick="location.href='index.html'">단어장으로</button>
+    </div>
+  </div>
+
+  <script src="calendar.js"></script>
+</body>
+</html>

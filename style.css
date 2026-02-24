@@ -15,6 +15,9 @@ body {
 .top-bar {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 10px;
   color: rgb(231, 220, 255);
   font-size: 14px;
@@ -60,6 +63,17 @@ button:hover {
   background: #cbd2ee;
 }
 
+.timer-chip {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  font-weight: 700;
+}
+
+.timer-chip.running {
+  background: #c5ffd8;
+  color: #14422a;
+}
+
 .bottom-controls {
   margin-top: 15px;
   text-align: center;
@@ -99,4 +113,110 @@ button:hover {
   max-height: 200px;
   overflow-y: auto;
   text-align: left;
+}
+
+.calendar-page {
+  display: block;
+  min-height: 100vh;
+  height: auto;
+  padding: 24px 0;
+}
+
+.calendar-container {
+  width: min(960px, calc(100% - 24px));
+  margin: 0 auto;
+}
+
+.dday-summary {
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff5fb;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.calendar-help {
+  margin: 0 0 10px;
+  color: #f2eaff;
+  font-size: 13px;
+}
+
+#calendar {
+  background: rgba(255, 255, 255, 0.93);
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.16);
+}
+
+.welcome-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 14, 31, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.welcome-popup {
+  width: min(360px, 100%);
+  background: #f3eafb;
+  color: #1c1436;
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+  padding: 20px;
+}
+
+.welcome-popup-message {
+  margin: 0 0 14px;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.welcome-popup-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.welcome-popup-actions button {
+  min-width: 100px;
+}
+
+.calendar-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 20, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.calendar-modal {
+  width: min(360px, 100%);
+  background: #f6f1ff;
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+  padding: 18px;
+  color: #1c1436;
+}
+
+.calendar-modal-title {
+  margin: 0 0 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.calendar-modal-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.calendar-modal-actions button {
+  width: 100%;
 }

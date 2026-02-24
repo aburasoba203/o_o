@@ -11,11 +11,13 @@
     <div class="top-bar">
       <span class="progress">진행: <span id="progress">0 / 0</span></span>
       <span class="progress" id="accuracy">정답률: 0% (0/0)</span>
+      <button id="studyTimerDisplay" class="timer-chip" onclick="handleTimerDisplayClick()">순공 00:00:00</button>
       <button class="small-btn" onclick="location.href='result.html'">기록</button>
+      <button onclick="location.href='calendar.html'">캘린더</button>
     </div>
 
     <div class="card">
-      <h1 id="word">단어 맞추기</h1>
+      <h1 id="word">단어 마추기</h1>
 
       <input type="text" id="answer" placeholder="뜻 입력 후 Enter" />
       <button onclick="checkAnswer()">확인</button>
@@ -24,6 +26,8 @@
     </div>
 
     <div class="bottom-controls">
+      <button onclick="startStudyTimer()">순공 타이머 시작</button>
+      <button onclick="endStudySession()">공부 종료</button>
       <button onclick="setAllMode()">전체 모드</button>
       <button onclick="setWrongMode()">오답 모드</button>
       <button class="danger" onclick="resetProgress()">처음부터</button>
