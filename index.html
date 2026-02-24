@@ -1,0 +1,35 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>단어 퀴즈</title>
+</head>
+<body>
+  <div class="container">
+
+    <div class="top-bar">
+      <span class="progress">진행: <span id="progress">0 / 0</span></span>
+      <button class="small-btn" onclick="location.href='result.html'">기록</button>
+    </div>
+
+    <div class="card">
+      <h1 id="word">단어 맞추기</h1>
+
+      <input type="text" id="answer" placeholder="뜻 입력 후 Enter" />
+      <button onclick="checkAnswer()">확인</button>
+
+      <p id="result"></p>
+    </div>
+
+    <div class="bottom-controls">
+      <button onclick="setAllMode()">전체 모드</button>
+      <button onclick="setWrongMode()">오답 모드</button>
+      <button class="danger" onclick="resetProgress()">처음부터</button>
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>학습 기록</title>
+</head>
+<body>
+  <div class="container result-page">
+    <h1>학습 기록</h1>
+
+    <div class="record-box">
+      <h2>맞힌 단어</h2>
+      <ul id="correctList"></ul>
+    </div>
+
+    <div class="record-box">
+      <h2>틀린 단어</h2>
+      <ul id="wrongList"></ul>
+    </div>
+
+    <button onclick="location.href='index.html'">돌아가기</button>
+  </div>
+
+  <script>
+    const correctWords = JSON.parse(localStorage.getItem("correctWords")) || [];
+    const wrongWords = JSON.parse(localStorage.getItem("wrongWords")) || [];
+
+    const correctList = document.getElementById("correctList");
+    const wrongList = document.getElementById("wrongList");
+
+    correctWords.forEach(word => {
+      const li = document.createElement("li");
+      li.innerText = word;
+      correctList.appendChild(li);
+    });
+
+    wrongWords.forEach(word => {
+      const li = document.createElement("li");
+      li.innerText = word;
+      wrongList.appendChild(li);
+    });
+  </script>
+</body>
+</html>
