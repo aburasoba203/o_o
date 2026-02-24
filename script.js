@@ -3,6 +3,9 @@ let words = [];
 let currentWord = null;
 let shuffledWords = [];
 let currentIndex = 0;
+let isChecking = false;
+let totalAttempts = parseInt(localStorage.getItem("totalAttempts") || "0", 10);
+let correctAttempts = parseInt(localStorage.getItem("correctAttempts") || "0", 10);
 
 window.addEventListener("DOMContentLoaded", () => {
   alert("반가워요! 오늘도 힘내볼까요?");
@@ -24,6 +27,7 @@ fetch("words.json")
       saveProgress();
     }
 
+    updateAccuracy();
     showCurrentWord();
   });
 
@@ -40,6 +44,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function shuffleArray(array) {
   return array.sort(() => Math.random() - 0.5);
+}
+
+function normalizeMeaningText(text) {
+  return String(text)
+    .replace(/\([^)]*\)/g, "")
+    .replace(/\[[^\]]*\]/g, "")
+    .trim()
+    .replace(/\s+/g, "")
+    .toLowerCase();
+}
+
+function parseMeaningInput(text) {
+  return String(text)
+    .split(",")
+    .map(item => normalizeMeaningText(item))
+    .filter(Boolean);
+}
+
+function saveAccuracy() {
+  localStorage.setItem("totalAttempts", totalAttempts);
+  localStorage.setItem("correctAttempts", correctAttempts);
+}
+
+function updateAccuracy() {
+  const accuracyElement = document.getElementById("accuracy");
+  if (!accuracyElement) return;
+
+  if (totalAttempts === 0) {
+    accuracyElement.innerText = "정답률: 0% (0/0)";
+    return;
+  }
+
+  const accuracy = Math.round((correctAttempts / totalAttempts) * 100);
+  accuracyElement.innerText =
+    `정답률: ${accuracy}% (${correctAttempts}/${totalAttempts})`;
 }
 
 function showCurrentWord() {
@@ -66,6 +105,7 @@ function setAllMode() {
   saveProgress();
   document.getElementById("result").innerText = "";
   document.getElementById("answer").value = "";
+  isChecking = false;
   showCurrentWord();
   document.getElementById("answer").focus();
 }
@@ -84,6 +124,7 @@ function setWrongMode() {
   currentIndex = 0;
   document.getElementById("result").innerText = "";
   document.getElementById("answer").value = "";
+  isChecking = false;
   showCurrentWord();
   document.getElementById("answer").focus();
 }
@@ -106,17 +147,26 @@ function loadProgress() {
 }
 
 function checkAnswer() {
+  if (isChecking) return;
+
   const userInput = document.getElementById("answer").value.trim();
   const result = document.getElementById("result");
   const wordElement = document.getElementById("word");
   const answerInput = document.getElementById("answer");
+  if (!currentWord || userInput === "") return;
 
-  const isCorrect = currentWord.meanings.some(
-    meaning => meaning === userInput
-  );
+  isChecking = true;
+
+  const normalizedCorrectMeanings = currentWord.meanings.map(normalizeMeaningText);
+  const userAnswers = parseMeaningInput(userInput);
+
+  const isCorrect =
+    userAnswers.length > 0 &&
+    userAnswers.every(answer => normalizedCorrectMeanings.includes(answer));
 
   if (isCorrect) {
     result.innerText = "정답 😎";
+    correctAttempts++;
 
     if (!correctWords.includes(currentWord.word)) {
       correctWords.push(currentWord.word);
@@ -130,6 +180,9 @@ function checkAnswer() {
       localStorage.setItem("wrongWords", JSON.stringify(wrongWords));
     }
   }
+  totalAttempts++;
+  saveAccuracy();
+  updateAccuracy();
 
   wordElement.innerText =
     currentWord.word + " : " + currentWord.meanings.join(", ");
@@ -141,6 +194,7 @@ function checkAnswer() {
     saveProgress();
     showCurrentWord();
     result.innerText = "";
+    isChecking = false;
     answerInput.focus();
   }, 1500);
 }
@@ -156,17 +210,23 @@ function resetProgress() {
   shuffledWords = shuffleArray([...words]);
   correctWords = [];
   wrongWords = [];
+  totalAttempts = 0;
+  correctAttempts = 0;
 
   // localStorage 정리
   localStorage.removeItem("shuffledWords");
   localStorage.removeItem("currentIndex");
   localStorage.removeItem("correctWords");
   localStorage.removeItem("wrongWords");
+  localStorage.removeItem("totalAttempts");
+  localStorage.removeItem("correctAttempts");
   saveProgress();
 
   // 화면 초기화
   document.getElementById("result").innerText = "";
   document.getElementById("answer").value = "";
+  isChecking = false;
+  updateAccuracy();
 
   // 첫 문제 표시
   showCurrentWord();
