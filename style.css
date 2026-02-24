@@ -1,7 +1,7 @@
 body {
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg, #566ed8, #d8c6eb);
+  background: linear-gradient(135deg, #75ce39, #d18fbb70);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -19,12 +19,12 @@ body {
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 10px;
-  color: rgb(231, 220, 255);
-  font-size: 14px;
+  color: rgb(75, 85, 47);
+  font-size: 16px;
 }
 
 .card {
-  background: rgb(233, 220, 245);
+  background:  #fffea781;
   padding: 40px 30px;
   border-radius: 16px;
   box-shadow: 0 20px 40px rgba(0,0,0,0.2);
@@ -49,7 +49,7 @@ button {
   padding: 10px 16px;
   border: none;
   border-radius: 8px;
-  background: #cbd2ee;
+  background: #e8eecb;
   color: rgb(28, 20, 54);
   cursor: pointer;
   font-size: 14px;
@@ -60,7 +60,7 @@ button:hover {
 }
 
 .small-btn {
-  background: #cbd2ee;
+  background: #e8eecb;
 }
 
 .timer-chip {
@@ -147,6 +147,23 @@ button:hover {
   border-radius: 14px;
   padding: 10px;
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.16);
+}
+
+#calendar .fc-daygrid-day-top {
+  justify-content: flex-start;
+}
+
+#calendar .fc-daygrid-day-number {
+  text-align: left;
+  padding-left: 2px;
+}
+
+#calendar .fc-daygrid-day.attended-day {
+  background: rgba(76, 175, 80, 0.18);
+}
+
+#calendar .fc-daygrid-day.attended-day .fc-daygrid-day-frame {
+  background: rgba(76, 175, 80, 0.12);
 }
 
 .welcome-popup-overlay {

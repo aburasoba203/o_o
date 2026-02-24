@@ -37,15 +37,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function buildEvents() {
     const events = [];
 
-    Object.keys(attendance).forEach(date => {
-      events.push({
-        title: "출석체크",
-        start: date,
-        backgroundColor: "#2ecc71",
-        borderColor: "#2ecc71"
-      });
-    });
-
     Object.keys(schedules).forEach(date => {
       events.push({
         title: `공부: ${schedules[date]}`,
@@ -76,6 +67,19 @@ document.addEventListener("DOMContentLoaded", () => {
     return events;
   }
 
+  function refreshAttendanceStyles() {
+    calendarEl.querySelectorAll(".attended-day").forEach(el => {
+      el.classList.remove("attended-day");
+    });
+
+    Object.keys(attendance).forEach(dateStr => {
+      const cell = calendarEl.querySelector(`[data-date="${dateStr}"]`);
+      if (cell) {
+        cell.classList.add("attended-day");
+      }
+    });
+  }
+
   function updateDdaySummary() {
     if (!ddaySummaryEl) return;
 
@@ -95,7 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .map(exam => {
         const dayDiff = Math.round((exam.dateObj - today) / (1000 * 60 * 60 * 24));
         const ddayLabel = dayDiff === 0 ? "D-Day" : `D-${dayDiff}`;
-        return `<div>${ddayLabel} | ${exam.name}</div>`;
+        return `<div>${ddayLabel} | ${exam.name} (${exam.date})</div>`;
       })
       .join("");
   }
@@ -110,6 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function rerenderEvents() {
     calendar.removeAllEvents();
     buildEvents().forEach(event => calendar.addEvent(event));
+    refreshAttendanceStyles();
   }
 
   function applyCalendarAction(action, dateStr) {
@@ -189,4 +194,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
   updateDdaySummary();
   calendar.render();
+  refreshAttendanceStyles();
 });

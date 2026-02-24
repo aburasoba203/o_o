@@ -19,15 +19,18 @@
     <div class="card">
       <h1 id="word">단어 마추기</h1>
 
-      <input type="text" id="answer" placeholder="뜻 입력 후 Enter" />
+      <input type="text" id="answer" placeholder="정답을 입력해주세듀" />
       <button onclick="checkAnswer()">확인</button>
 
       <p id="result"></p>
     </div>
 
-    <div class="bottom-controls">
+    <div class="bottom-controls timer-controls">
       <button id="studyTimerActionBtn" onclick="handleStudyTimerActionButtonClick()">순공 타이머 시작</button>
       <button onclick="endStudySession()">공부 종료</button>
+    </div>
+
+    <div class="bottom-controls">
       <button onclick="setAllMode()">전체 모드</button>
       <button onclick="setWrongMode()">오답 모드</button>
       <button class="danger" onclick="resetProgress()">처음부터</button>
