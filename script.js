@@ -1,9 +1,13 @@
 ﻿let mode = "all"; // "all" 또는 "wrong"
+const CUSTOM_WORDS_KEY = "customWords";
+const CUSTOM_WORDS_SESSION_KEY = "customWordsSessionBackup";
 let words = [];
+let baseWords = [];
 let currentWord = null;
 let shuffledWords = [];
 let currentIndex = 0;
 let isChecking = false;
+let wrongModePendingWords = [];
 let studyTimerIntervalId = null;
 let totalAttempts = parseInt(localStorage.getItem("totalAttempts") || "0", 10);
 let correctAttempts = parseInt(localStorage.getItem("correctAttempts") || "0", 10);
@@ -13,26 +17,136 @@ let studyTimerState = JSON.parse(localStorage.getItem("studyTimerState")) || {
   isRunning: false,
   startedAt: null
 };
+localStorage.removeItem("correctWords");
 
 // 기존 저장된 데이터 불러오기
-let correctWords = JSON.parse(localStorage.getItem("correctWords")) || [];
 let wrongWords = JSON.parse(localStorage.getItem("wrongWords")) || [];
 
-// JSON 불러오기
-fetch("words.json")
-  .then(response => response.json())
-  .then(data => {
-    words = data;
+function getCustomWords() {
+  try {
+    const localRaw = localStorage.getItem(CUSTOM_WORDS_KEY);
+    const sessionRaw = sessionStorage.getItem(CUSTOM_WORDS_SESSION_KEY);
+    const parsed = JSON.parse(localRaw || sessionRaw || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.warn("Failed to parse custom words from localStorage:", error);
+    return [];
+  }
+}
 
-    if (!loadProgress()) {
-      shuffledWords = shuffleArray([...words]);
-      currentIndex = 0;
-      saveProgress();
+function saveCustomWords(customWords) {
+  const normalizedCustomWords = [...buildWordMap(customWords || []).values()];
+  const serialized = JSON.stringify(normalizedCustomWords);
+  localStorage.setItem(CUSTOM_WORDS_KEY, serialized);
+  sessionStorage.setItem(CUSTOM_WORDS_SESSION_KEY, serialized);
+  return normalizedCustomWords;
+}
+
+function mergeAndSaveCustomWords(incomingWords) {
+  const customMap = buildWordMap(getCustomWords());
+  (incomingWords || []).forEach(item => {
+    if (!item || !item.word) return;
+    customMap.set(String(item.word).trim(), {
+      word: String(item.word).trim(),
+      meanings: Array.isArray(item.meanings)
+        ? item.meanings.map(v => String(v).trim()).filter(Boolean)
+        : []
+    });
+  });
+  return saveCustomWords([...customMap.values()]);
+}
+
+function getBaseWordSet() {
+  return new Set((baseWords || []).map(item => item.word));
+}
+
+function buildWordMap(wordList) {
+  const wordMap = new Map();
+  wordList.forEach(item => {
+    if (!item || !item.word) return;
+    wordMap.set(String(item.word).trim(), {
+      word: String(item.word).trim(),
+      meanings: Array.isArray(item.meanings) ? item.meanings.map(v => String(v).trim()).filter(Boolean) : []
+    });
+  });
+  return wordMap;
+}
+
+function rebuildWords() {
+  const wordMap = buildWordMap(baseWords);
+  getCustomWords().forEach(item => {
+    if (!item || !item.word) return;
+    wordMap.set(item.word, item);
+  });
+  words = [...wordMap.values()].filter(item => item.word && item.meanings.length > 0);
+}
+
+function resetQuizStateWithCurrentWords() {
+  mode = "all";
+  currentIndex = 0;
+  isChecking = false;
+  wrongModePendingWords = [];
+  shuffledWords = shuffleArray([...words]);
+  saveProgress();
+
+  const resultElement = document.getElementById("result");
+  const answerInput = document.getElementById("answer");
+  if (resultElement) resultElement.innerText = "";
+  if (answerInput) answerInput.value = "";
+
+  showCurrentWord();
+  if (answerInput) answerInput.focus();
+}
+
+function resetQuizStateWithPriorityWords(priorityWords) {
+  mode = "all";
+  currentIndex = 0;
+  isChecking = false;
+  wrongModePendingWords = [];
+
+  const prioritySet = new Set((priorityWords || []).map(item => item.word));
+  const restWords = shuffleArray(words.filter(item => !prioritySet.has(item.word)));
+  shuffledWords = [...(priorityWords || []), ...restWords];
+  saveProgress();
+
+  const resultElement = document.getElementById("result");
+  const answerInput = document.getElementById("answer");
+  if (resultElement) resultElement.innerText = "";
+  if (answerInput) answerInput.value = "";
+
+  showCurrentWord();
+  if (answerInput) answerInput.focus();
+}
+
+// JSON 불러오기
+(async () => {
+  try {
+    const response = await fetch("words.json");
+    const text = await response.text();
+    let data = [];
+
+    if (text.trim()) {
+      const parsed = JSON.parse(text);
+      data = Array.isArray(parsed) ? parsed : [];
     }
 
-    updateAccuracy();
-    showCurrentWord();
-  });
+    baseWords = data;
+  } catch (error) {
+    console.error("words.json load failed. Falling back to custom words only:", error);
+    baseWords = [];
+  }
+
+  rebuildWords();
+
+  if (!loadProgress()) {
+    shuffledWords = shuffleArray([...words]);
+    currentIndex = 0;
+    saveProgress();
+  }
+
+  updateAccuracy();
+  showCurrentWord();
+})();
 
 document.addEventListener("DOMContentLoaded", () => {
   if (!sessionStorage.getItem("welcomePopupShown")) {
@@ -43,12 +157,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const answerInput = document.getElementById("answer");
   if (!answerInput) return;
+  let isComposingAnswer = false;
+
+  answerInput.addEventListener("compositionstart", () => {
+    isComposingAnswer = true;
+  });
+
+  answerInput.addEventListener("compositionend", () => {
+    isComposingAnswer = false;
+  });
 
   answerInput.addEventListener("keydown", event => {
     if (event.key !== "Enter") return;
+    if (isComposingAnswer || event.isComposing || event.keyCode === 229) return;
     event.preventDefault();
     checkAnswer();
   });
+
+  const wordImportModal = document.getElementById("wordImportModal");
+  if (wordImportModal) {
+    wordImportModal.addEventListener("click", event => {
+      if (event.target === wordImportModal) {
+        closeWordImportModal();
+      }
+    });
+  }
+
+  const customWordsModal = document.getElementById("customWordsModal");
+  if (customWordsModal) {
+    customWordsModal.addEventListener("click", event => {
+      if (event.target === customWordsModal) {
+        closeCustomWordsModal();
+      }
+    });
+  }
 });
 
 function getTodayDateString() {
@@ -275,11 +417,178 @@ function normalizeMeaningText(text) {
     .toLowerCase();
 }
 
+function getMeaningAnswerVariants(text) {
+  const source = String(text || "");
+  let variants = new Set([source]);
+
+  // ()와 [] 내부 표기는 선택 입력으로 허용한다. 예: 견과(류) => 견과, 견과류
+  const optionalPatterns = [/\(([^()]*)\)/g, /\[([^\[\]]*)\]/g];
+
+  optionalPatterns.forEach(pattern => {
+    let changed = true;
+    while (changed) {
+      changed = false;
+      const nextVariants = new Set();
+
+      variants.forEach(value => {
+        const match = value.match(pattern);
+        if (!match) {
+          nextVariants.add(value);
+          return;
+        }
+
+        changed = true;
+        const full = match[0];
+        const inner = match[1];
+        nextVariants.add(value.replace(full, ""));
+        nextVariants.add(value.replace(full, inner));
+      });
+
+      variants = nextVariants;
+    }
+  });
+
+  return [...variants].map(normalizeMeaningText).filter(Boolean);
+}
+
 function parseMeaningInput(text) {
   return String(text)
     .split(",")
     .map(item => normalizeMeaningText(item))
     .filter(Boolean);
+}
+
+function parseWordImportText(text) {
+  const lines = String(text)
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(Boolean);
+
+  if (lines.length === 0) {
+    return { items: [], error: "입력된 내용이 없어요." };
+  }
+
+  if (lines.length % 2 !== 0) {
+    return { items: [], error: "영단어/뜻이 2줄씩 짝이 맞아야 해요." };
+  }
+
+  const items = [];
+
+  for (let i = 0; i < lines.length; i += 2) {
+    const word = lines[i];
+    const meanings = lines[i + 1]
+      .split(",")
+      .map(item => item.trim())
+      .filter(Boolean);
+
+    if (!word || meanings.length === 0) {
+      return { items: [], error: "빈 단어 또는 뜻이 있어요." };
+    }
+
+    items.push({ word, meanings });
+  }
+
+  return { items, error: null };
+}
+
+function openWordImportModal() {
+  const modal = document.getElementById("wordImportModal");
+  const textarea = document.getElementById("wordImportTextarea");
+  if (!modal || !textarea) return;
+
+  modal.hidden = false;
+  textarea.focus();
+}
+
+function closeWordImportModal() {
+  const modal = document.getElementById("wordImportModal");
+  if (!modal) return;
+  modal.hidden = true;
+}
+
+function renderCustomWordsList() {
+  const listEl = document.getElementById("customWordsList");
+  const summaryEl = document.getElementById("customWordsSummary");
+  if (!listEl || !summaryEl) return;
+
+  const customWords = [...buildWordMap(getCustomWords()).values()]
+    .sort((a, b) => a.word.localeCompare(b.word, "en", { sensitivity: "base" }));
+
+  summaryEl.innerText = `${customWords.length}개`;
+
+  if (customWords.length === 0) {
+    listEl.innerHTML = '<p class="custom-words-empty">아직 추가한 단어가 없어요.</p>';
+    return;
+  }
+
+  listEl.innerHTML = customWords
+    .map(item => {
+      const safeWord = escapeHtml(item.word);
+      const safeMeanings = (Array.isArray(item.meanings) ? item.meanings : [])
+        .map(meaning => escapeHtml(meaning))
+        .join(", ");
+      return `
+        <div class="custom-word-item">
+          <div class="custom-word-title">${safeWord}</div>
+          <div class="custom-word-meanings">${safeMeanings}</div>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function openCustomWordsModal() {
+  renderCustomWordsList();
+  const modal = document.getElementById("customWordsModal");
+  if (!modal) return;
+  modal.hidden = false;
+}
+
+function closeCustomWordsModal() {
+  const modal = document.getElementById("customWordsModal");
+  if (!modal) return;
+  modal.hidden = true;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function submitWordImport() {
+  const textarea = document.getElementById("wordImportTextarea");
+  if (!textarea) return;
+
+  const { items, error } = parseWordImportText(textarea.value);
+  if (error) {
+    alert(error);
+    return;
+  }
+
+  mergeAndSaveCustomWords(items);
+  rebuildWords();
+  renderCustomWordsList();
+  resetQuizStateWithPriorityWords(items);
+
+  alert(`${items.length}개 단어 추가 완료!`);
+  textarea.value = "";
+  closeWordImportModal();
+}
+
+function resetCustomWords() {
+  const shouldReset = confirm("추가한 단어장만 초기화할까요? (기본 단어는 유지돼요)");
+  if (!shouldReset) return;
+
+  saveCustomWords([]);
+  sessionStorage.removeItem(CUSTOM_WORDS_SESSION_KEY);
+  rebuildWords();
+  renderCustomWordsList();
+  resetQuizStateWithCurrentWords();
+  alert("추가한 단어장을 초기화했어요.");
 }
 
 function saveAccuracy() {
@@ -301,10 +610,28 @@ function updateAccuracy() {
     `정답률: ${accuracy}% (${correctAttempts}/${totalAttempts})`;
 }
 
+function getWordsByWordList(wordList) {
+  const wordSet = new Set(wordList);
+  return words.filter(item => wordSet.has(item.word));
+}
+
 function showCurrentWord() {
   if (currentIndex >= shuffledWords.length) {
-    document.getElementById("word").innerText = "모든 문제 정복ㅋ 🎉";
-    return;
+    if (mode === "wrong") {
+      const remainingWrongWords = getWordsByWordList(wrongModePendingWords);
+      if (remainingWrongWords.length > 0) {
+        shuffledWords = shuffleArray([...remainingWrongWords]);
+        currentIndex = 0;
+        saveProgress();
+        document.getElementById("result").innerText = "오답 다시 갑니두 😤";
+      } else {
+        document.getElementById("word").innerText = "오답 모드 올클리어 🎉";
+        return;
+      }
+    } else {
+      document.getElementById("word").innerText = "모든 문제 정복ㅋ 🎉";
+      return;
+    }
   }
 
   currentWord = shuffledWords[currentIndex];
@@ -320,6 +647,7 @@ function updateProgress() {
 
 function setAllMode() {
   mode = "all";
+  wrongModePendingWords = [];
   shuffledWords = shuffleArray([...words]);
   currentIndex = 0;
   saveProgress();
@@ -332,8 +660,8 @@ function setAllMode() {
 
 function setWrongMode() {
   mode = "wrong";
-  const wrongWordSet = new Set(wrongWords);
-  const wrongOnlyWords = words.filter(item => wrongWordSet.has(item.word));
+  wrongModePendingWords = [...wrongWords];
+  const wrongOnlyWords = getWordsByWordList(wrongModePendingWords);
 
   if (wrongOnlyWords.length === 0) {
     alert("오답 기록이 없습니두ㅋ");
@@ -359,8 +687,51 @@ function loadProgress() {
   const savedIndex = localStorage.getItem("currentIndex");
 
   if (savedWords && savedIndex !== null) {
-    shuffledWords = JSON.parse(savedWords);
-    currentIndex = parseInt(savedIndex, 10);
+    const parsedSavedWords = JSON.parse(savedWords);
+    const savedWordList = Array.isArray(parsedSavedWords) ? parsedSavedWords : [];
+    const savedWordMap = new Map(
+      savedWordList
+        .filter(item => item && item.word)
+        .map(item => [item.word, item])
+    );
+
+    const currentWordMap = new Map(words.map(item => [item.word, item]));
+    const baseWordSet = getBaseWordSet();
+    const recoveredCustomWords = [];
+
+    // customWords 로드가 비어도, 저장된 진행목록에 있는 "기본 단어가 아닌 단어"는 복구한다.
+    savedWordList.forEach(item => {
+      if (!item || !item.word || !Array.isArray(item.meanings)) return;
+      if (!baseWordSet.has(item.word) && !currentWordMap.has(item.word)) {
+        const recoveredItem = {
+          word: String(item.word).trim(),
+          meanings: item.meanings.map(v => String(v).trim()).filter(Boolean)
+        };
+        if (!recoveredItem.word || recoveredItem.meanings.length === 0) return;
+        currentWordMap.set(recoveredItem.word, recoveredItem);
+        recoveredCustomWords.push(recoveredItem);
+      }
+    });
+
+    if (recoveredCustomWords.length > 0) {
+      const customMap = buildWordMap(getCustomWords());
+      recoveredCustomWords.forEach(item => customMap.set(item.word, item));
+      saveCustomWords([...customMap.values()]);
+      words = [...currentWordMap.values()];
+    }
+
+    // 현재 단어장을 기준으로 저장된 순서를 최대한 유지하고, 새로 추가된 단어는 뒤에 붙인다.
+    const restoredWords = [];
+    savedWordMap.forEach((_, word) => {
+      if (currentWordMap.has(word)) restoredWords.push(currentWordMap.get(word));
+    });
+    currentWordMap.forEach((item, word) => {
+      if (!savedWordMap.has(word)) restoredWords.push(item);
+    });
+
+    shuffledWords = restoredWords;
+    currentIndex = Math.min(parseInt(savedIndex, 10) || 0, Math.max(restoredWords.length - 1, 0));
+    saveProgress();
     return true;
   }
   return false;
@@ -377,20 +748,21 @@ function checkAnswer() {
 
   isChecking = true;
 
-  const normalizedCorrectMeanings = currentWord.meanings.map(normalizeMeaningText);
+  const normalizedCorrectMeanings = new Set(
+    currentWord.meanings.flatMap(getMeaningAnswerVariants)
+  );
   const userAnswers = parseMeaningInput(userInput);
 
   const isCorrect =
     userAnswers.length > 0 &&
-    userAnswers.every(answer => normalizedCorrectMeanings.includes(answer));
+    userAnswers.every(answer => normalizedCorrectMeanings.has(answer));
 
   if (isCorrect) {
     result.innerText = "정답입니두 😎";
     correctAttempts++;
 
-    if (!correctWords.includes(currentWord.word)) {
-      correctWords.push(currentWord.word);
-      localStorage.setItem("correctWords", JSON.stringify(correctWords));
+    if (mode === "wrong") {
+      wrongModePendingWords = wrongModePendingWords.filter(word => word !== currentWord.word);
     }
   } else {
     result.innerText = "틀렸습니두ㅋ 😅";
@@ -428,15 +800,14 @@ function resetProgress() {
 
   // 단어 다시 섞기
   shuffledWords = shuffleArray([...words]);
-  correctWords = [];
   wrongWords = [];
+  wrongModePendingWords = [];
   totalAttempts = 0;
   correctAttempts = 0;
 
   // localStorage 정리
   localStorage.removeItem("shuffledWords");
   localStorage.removeItem("currentIndex");
-  localStorage.removeItem("correctWords");
   localStorage.removeItem("wrongWords");
   localStorage.removeItem("totalAttempts");
   localStorage.removeItem("correctAttempts");

@@ -6,14 +6,28 @@
   <title>단어 퀴즈</title>
 </head>
 <body>
-  <div class="container">
+  <nav class="app-nav index-nav" aria-label="네비게이션">
+    <div class="nav-links">
+      <button class="shift-btn" disabled>단어장</button>
+      <button class="shift-btn" onclick="location.href='calendar.html'">캘린더</button>
+    </div>
+    <div class="nav-tools">
+      <button id="studyTimerActionBtn" onclick="handleStudyTimerActionButtonClick()">순공 타이머 시작</button>
+      <button id="studyTimerDisplay" class="timer-chip" onclick="handleTimerDisplayClick()">순공 00:00:00</button>
+      <button onclick="endStudySession()">공부 종료</button>
+    </div>
+    <div class="nav-actions-right">
+      <button class="small-btn" type="button" onclick="openWordImportModal()">단어 추가하기</button>
+      <button class="small-btn" type="button" onclick="openCustomWordsModal()">단어 목록 보기</button>
+      <button class="small-btn" type="button" onclick="resetCustomWords()">단어장 초기화</button>
+    </div>
+  </nav>
 
+  <div class="container">
     <div class="top-bar">
       <span class="progress">진행: <span id="progress">0 / 0</span></span>
       <span class="progress" id="accuracy">정답률: 0% (0/0)</span>
-      <button id="studyTimerDisplay" class="timer-chip" onclick="handleTimerDisplayClick()">순공 00:00:00</button>
-      <button class="small-btn" onclick="location.href='result.html'">기록</button>
-      <button onclick="location.href='calendar.html'">캘린더</button>
+      <button class="small-btn" onclick="location.href='result.html'">오답노트</button>
     </div>
 
     <div class="card">
@@ -25,11 +39,6 @@
       <p id="result"></p>
     </div>
 
-    <div class="bottom-controls timer-controls">
-      <button id="studyTimerActionBtn" onclick="handleStudyTimerActionButtonClick()">순공 타이머 시작</button>
-      <button onclick="endStudySession()">공부 종료</button>
-    </div>
-
     <div class="bottom-controls">
       <button onclick="setAllMode()">전체 모드</button>
       <button onclick="setWrongMode()">오답 모드</button>
@@ -38,6 +47,33 @@
 
   </div>
 
+  <div id="wordImportModal" class="word-import-overlay" hidden>
+    <div class="word-import-modal" role="dialog" aria-modal="true" aria-label="단어 추가">
+      <h2>단어 추가하기</h2>
+      <p>형식: 영단어 한 줄, 뜻 한 줄 (반복). 뜻 여러 개는 쉼표로 구분.</p>
+      <textarea
+        id="wordImportTextarea"
+        placeholder="accept&#10;받아들이다&#10;accident&#10;사고, 우연"
+      ></textarea>
+      <div class="word-import-actions">
+        <button type="button" onclick="submitWordImport()">추가</button>
+        <button type="button" class="small-btn" onclick="closeWordImportModal()">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="customWordsModal" class="word-import-overlay" hidden>
+    <div class="word-import-modal custom-words-modal" role="dialog" aria-modal="true" aria-label="단어 목록">
+      <h2>단어 목록</h2>
+      <p id="customWordsSummary">0개</p>
+      <div id="customWordsList" class="custom-words-list" aria-live="polite"></div>
+      <div class="word-import-actions">
+        <button type="button" class="small-btn" onclick="closeCustomWordsModal()">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="help-modal.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

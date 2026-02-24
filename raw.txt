@@ -5,13 +5,13 @@ accident
 amateur
 아마추어
 attend
-① 참석하다 ② 돌보다
+참석하다, 돌보다
 beat
 치다
 beautiful
 아름다운
 bill
-① 계산서 ② 지폐 ③ 법안
+계산서, 지폐, 법안
 bit
 약간, 조금
 bless
@@ -25,13 +25,13 @@ collect
 college
 대학
 couple
-① 두 개 ② 부부
+두 개, 부부
 develop
 발전시키다
 discuss
 토론하다
 energy
-① 활력 ② 에너지
+활력, 에너지
 forget
 잊다
 grade
@@ -43,11 +43,11 @@ heat
 memory
 기억(력)
 nature
-① 자연 ② 천성
+자연, 천성
 passport
 여권
 pattern
-① 무늬 ② 양식
+무늬, 양식
 pause
 중단, 멈춤
 piece
@@ -83,7 +83,7 @@ amazing
 anxious
 걱정하는
 area
-① 지역 ② 분야
+지역, 분야
 balance
 균형
 ceremony
@@ -91,7 +91,7 @@ ceremony
 climate
 기후
 consult
-① 상담 받다 ② 상의하다
+상담 받다, 상의하다
 cotton
 면, 솜
 crash
@@ -117,7 +117,7 @@ huge
 invent
 발명하다
 junior
-① 부하 ② (대학) 3학년
+부하, (대학) 3학년
 lock
 잠그다; 자물쇠
 luck
@@ -127,7 +127,7 @@ metal
 method
 방법
 observe
-① 관찰하다 ② 준수하다
+관찰하다, 준수하다
 offer
 제안하다; 제의
 relative
@@ -135,17 +135,17 @@ relative
 sample
 견본, 샘플
 senior
-① 상사 ② 연장자
+상사, 연장자
 shape
 모양, 형태
 shower
-① 소나기 ② 샤워
+소나기, 샤워
 sight
-① 시력 ② 광경
+시력, 광경
 source
 근원
 stage
-① 단계 ② 무대
+단계, 무대
 survive
 ~에서 생존하다
 tower
@@ -163,7 +163,7 @@ amount
 attract
 (마음을) 끌다
 branch
-① 나뭇가지 ② 지점
+나뭇가지, 지점
 burden
 짐
 cause
@@ -173,19 +173,19 @@ chase
 comfortable
 편안한
 contest
-① 대회 ② 경쟁
+대회, 경쟁
 course
-① 강좌 ② 방침
+강좌, 방침
 create
 창조하다
 destroy
 파괴하다
 direction
-① 방향 ② 지시
+방향, 지시
 effect
 영향, 효과
 examination
-① 시험 ② 조사
+시험, 조사
 experience
 경험
 fly
@@ -279,9 +279,9 @@ international
 lot
 많음, 다수
 nation
-① 국민 ② 국가
+국민, 국가
 order
-① 순서 ② 주문
+순서, 주문
 passenger
 승객
 prepare
@@ -297,9 +297,9 @@ row
 schedule
 일정
 sentence
-① 문장 ② 선고
+문장, 선고
 serious
-① 심각한 ② 진지한
+심각한, 진지한
 spirit
 정신
 supply
@@ -329,11 +329,11 @@ century
 charge
 요금; 고발하다
 degree
-① 정도 ② 학위
+정도, 학위
 doubt
 의심
 enter
-① 들어가다 ② 입학하다
+들어가다, 입학하다
 except
 ~을 제외하고
 explain
@@ -341,11 +341,11 @@ explain
 factory
 공장
 figure
-① 수치 ② 인물
+수치, 인물
 find
-① 찾다 ② ~라고 생각하다
+찾다, ~라고 생각하다
 fix
-① 고정시키다 ② 고치다
+고정시키다, 고치다
 float
 뜨다
 flood
@@ -389,7 +389,7 @@ stupid
 surround
 둘러싸다
 treat
-① 취급하다 ② 치료하다
+취급하다, 치료하다
 triumph
 (큰) 승리
 trouble
@@ -447,7 +447,7 @@ mention
 moment
 순간
 object
-① 물건 ② 목적
+물건, 목적
 obtain
 얻다, 입수하다
 patient
@@ -465,7 +465,7 @@ report
 rid
 없애다
 save
-① 구하다 ② (돈을) 모으다
+구하다, (돈을) 모으다
 scholar
 학자
 service
@@ -495,7 +495,7 @@ cloth
 company
 회사
 cost
-① 비용 ② 희생
+비용, 희생
 dictionary
 사전
 emotion
@@ -507,7 +507,7 @@ fur
 grave
 무덤
 ground
-① 땅 ② 이유
+땅, 이유
 habit
 습관, 버릇
 heaven
@@ -529,7 +529,7 @@ pollution
 private
 사적인
 project
-① 계획 ② (연구) 과제
+계획, (연구) 과제
 pronounce
 발음하다
 protect
@@ -559,7 +559,7 @@ various
 warn
 경고하다
 abuse
-① 남용 ② 학대
+남용, 학대
 active
 활동적인
 advice
@@ -567,13 +567,13 @@ advice
 appointment
 약속
 beg
-① 간청하다 ② 구걸하다
+간청하다, 구걸하다
 calm
 침착한
 capital
-① 수도 ② 자본
+수도, 자본
 care
-① 관리 ② 조심
+관리, 조심
 complain
 불평하다
 complete
@@ -599,7 +599,7 @@ lay
 liberty
 자유
 master
-① 주인 ② 달인
+주인, 달인
 normal
 보통의, 정상적인
 opinion
@@ -613,7 +613,7 @@ replace
 respect
 존경
 sale
-① 판매 ② 할인 판매
+판매, 할인 판매
 series
 연속, 시리즈
 settle
@@ -623,11 +623,11 @@ sign
 silly
 어리석은
 space
-① 공간 ② 우주
+공간, 우주
 spot
 장소; (딱) 발견하다
 subject
-① 주제 ② 과목
+주제, 과목
 terrible
 끔찍한
 throat
@@ -689,7 +689,7 @@ power
 pretend
 ~인 척하다
 price
-① 가격 ② 대가
+가격, 대가
 public
 공공의; 일반 사람들
 religious
@@ -711,9 +711,9 @@ temperature
 tool
 도구
 tough
-① 힘든 ② 강한
+힘든, 강한
 view
-① 시야 ② 의견
+시야, 의견
 whisper
 속삭이다
 wise
@@ -787,9 +787,9 @@ shade
 solution
 해결
 state
-① 상태 ② 주(州)
+상태, 주(州)
 step
-① (발)걸음 ② 단계
+(발)걸음, 단계
 suffer
 고통받다, 당하다
 system
@@ -879,7 +879,7 @@ window
 yard
 마당
 adopt
-① 채택하다 ② 입양하다
+채택하다, 입양하다
 ancestor
 조상
 appetite
@@ -1059,7 +1059,7 @@ dawn
 deep
 깊은
 earth
-① 지구 ② 흙
+지구, 흙
 environment
 환경
 flow
@@ -1525,7 +1525,7 @@ art
 athlete
 운동선수
 bat
-① 방망이 ② 박쥐
+방망이, 박쥐
 bike
 자전거
 brown
@@ -1573,7 +1573,7 @@ musician
 purple
 자주색의
 race
-① 경주 ② 인종
+경주, 인종
 relay
 전달하다
 sculpture
@@ -1893,7 +1893,7 @@ load
 paste
 반죽
 practice
-① 연습 ② 실행
+연습, 실행
 prince
 왕자
 quality
@@ -2123,7 +2123,7 @@ impressive
 kind
 친절한, 종류, 유형
 last
-① 마지막의 ② 지난
+마지막의, 지난
 loud
 시끄러운, 시끄럽게
 native

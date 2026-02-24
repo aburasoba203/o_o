@@ -3,43 +3,123 @@
 <head>
   <link rel="stylesheet" href="style.css">
   <meta charset="UTF-8" />
-  <title>학습 기록</title>
+  <title>오답노트</title>
 </head>
 <body>
+  <nav class="app-nav" aria-label="네비게이션">
+    <div class="nav-links">
+      <button class="shift-btn" onclick="location.href='index.html'">단어장</button>
+      <button class="shift-btn" onclick="location.href='calendar.html'">캘린더</button>
+    </div>
+    <div class="nav-tools">
+      <button id="studyTimerActionBtn" onclick="handleStudyTimerActionButtonClick()">순공 타이머 시작</button>
+      <button id="studyTimerDisplay" class="timer-chip" onclick="handleTimerDisplayClick()">순공 00:00:00</button>
+    </div>
+  </nav>
+
   <div class="container result-page">
-    <h1>학습 기록</h1>
+    <h1>오답노트</h1>
 
     <div class="record-box">
-      <h2>맞힌 단어</h2>
-      <ul id="correctList"></ul>
+      <p id="wrongSummary">0개</p>
+      <div id="wrongList" class="custom-words-list" aria-live="polite"></div>
     </div>
-
-    <div class="record-box">
-      <h2>틀린 단어</h2>
-      <ul id="wrongList"></ul>
-    </div>
-
-    <button onclick="location.href='index.html'">돌아가기</button>
   </div>
 
   <script>
-    const correctWords = JSON.parse(localStorage.getItem("correctWords")) || [];
-    const wrongWords = JSON.parse(localStorage.getItem("wrongWords")) || [];
+    const CUSTOM_WORDS_KEY = "customWords";
+    const CUSTOM_WORDS_SESSION_KEY = "customWordsSessionBackup";
 
-    const correctList = document.getElementById("correctList");
-    const wrongList = document.getElementById("wrongList");
+    function parseJsonArray(raw) {
+      try {
+        const parsed = JSON.parse(raw || "[]");
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        return [];
+      }
+    }
 
-    correctWords.forEach(word => {
-      const li = document.createElement("li");
-      li.innerText = word;
-      correctList.appendChild(li);
-    });
+    function buildWordMap(wordList) {
+      const map = new Map();
+      (wordList || []).forEach(item => {
+        if (!item || !item.word) return;
+        const word = String(item.word).trim();
+        const meanings = Array.isArray(item.meanings)
+          ? item.meanings.map(v => String(v).trim()).filter(Boolean)
+          : [];
+        if (!word) return;
+        map.set(word, { word, meanings });
+      });
+      return map;
+    }
 
-    wrongWords.forEach(word => {
-      const li = document.createElement("li");
-      li.innerText = word;
-      wrongList.appendChild(li);
-    });
+    async function loadBaseWords() {
+      try {
+        const response = await fetch("words.json");
+        const text = await response.text();
+        if (!text.trim()) return [];
+        return parseJsonArray(text);
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function renderWrongWords(items) {
+      const summaryEl = document.getElementById("wrongSummary");
+      const listEl = document.getElementById("wrongList");
+      if (!summaryEl || !listEl) return;
+
+      summaryEl.innerText = `${items.length}개`;
+      listEl.innerHTML = "";
+
+      if (items.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "custom-words-empty";
+        empty.innerText = "오답 기록이 없어요.";
+        listEl.appendChild(empty);
+        return;
+      }
+
+      items.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "custom-word-item";
+
+        const wordEl = document.createElement("div");
+        wordEl.className = "custom-word-title";
+        wordEl.innerText = item.word;
+
+        const meaningsEl = document.createElement("div");
+        meaningsEl.className = "custom-word-meanings";
+        meaningsEl.innerText = item.meanings.length > 0
+          ? item.meanings.join(", ")
+          : "뜻 정보 없음";
+
+        row.appendChild(wordEl);
+        row.appendChild(meaningsEl);
+        listEl.appendChild(row);
+      });
+    }
+
+    (async () => {
+      const wrongWords = parseJsonArray(localStorage.getItem("wrongWords"));
+      const baseWords = await loadBaseWords();
+      const localCustomWords = parseJsonArray(localStorage.getItem(CUSTOM_WORDS_KEY));
+      const sessionCustomWords = parseJsonArray(sessionStorage.getItem(CUSTOM_WORDS_SESSION_KEY));
+
+      const combinedMap = buildWordMap(baseWords);
+      buildWordMap(sessionCustomWords).forEach((value, key) => combinedMap.set(key, value));
+      buildWordMap(localCustomWords).forEach((value, key) => combinedMap.set(key, value));
+
+      const items = wrongWords.map(word => {
+        const normalizedWord = String(word).trim();
+        const found = combinedMap.get(normalizedWord);
+        return found || { word: normalizedWord, meanings: [] };
+      });
+
+      renderWrongWords(items);
+    })();
   </script>
+  <script src="help-modal.js"></script>
+  <script src="timer-nav.js"></script>
 </body>
 </html>

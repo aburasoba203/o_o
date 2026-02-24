@@ -10,16 +10,27 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="calendar-page">
+  <nav class="app-nav index-nav" aria-label="네비게이션">
+    <div class="nav-links">
+      <button class="shift-btn" onclick="location.href='index.html'">단어장</button>
+      <button class="shift-btn" disabled>캘린더</button>
+    </div>
+    <div class="nav-tools">
+      <button id="studyTimerActionBtn" onclick="handleStudyTimerActionButtonClick()">순공 타이머 시작</button>
+      <button id="studyTimerDisplay" class="timer-chip" onclick="handleTimerDisplayClick()">순공 00:00:00</button>
+      <button onclick="endStudySession()">공부 종료</button>
+    </div>
+  </nav>
+
   <div class="container calendar-container">
     <h1>공부 캘린더</h1>
     <div id="ddaySummary" class="dday-summary">시험 일정이 없습니디리링.</div>
-    <p class="calendar-help">날짜를 더블클릭하면 공부/시험 일정을 추가할 수 있습니두.</p>
+    <p class="calendar-help">날짜를 클릭하면 공부/시험 일정을 추가할 수 있습니두.</p>
     <div id="calendar"></div>
-    <div class="bottom-controls">
-      <button onclick="location.href='index.html'">단어장으로</button>
-    </div>
   </div>
 
+  <script src="help-modal.js"></script>
   <script src="calendar.js"></script>
+  <script src="timer-nav.js"></script>
 </body>
 </html>
