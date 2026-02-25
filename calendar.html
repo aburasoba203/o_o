@@ -25,7 +25,13 @@
   <div class="container calendar-container">
     <div class="calendar-title-row">
       <h1>캘린더</h1>
-      <button type="button" class="small-btn" onclick="toggleDecorPalette()">꾸미기</button>
+      <div class="calendar-title-actions">
+        <div class="calendar-view-toggle" role="group" aria-label="캘린더 보기 모드">
+          <button type="button" id="calendarMonthViewBtn" class="small-btn" onclick="setCalendarViewMode('month')">먼슬리</button>
+          <button type="button" id="calendarWeekViewBtn" class="small-btn" onclick="setCalendarViewMode('week')">위클리</button>
+        </div>
+        <button type="button" class="small-btn" onclick="toggleDecorPalette()">꾸미기</button>
+      </div>
     </div>
     <div id="ddaySummary" class="dday-summary">시험 일정이 없습니다.</div>
     <p class="calendar-help">날짜를 클릭하면 공부/시험 일정을 추가할 수 있습니다.</p>

@@ -394,6 +394,31 @@ button:hover {
   margin: 8px 0 6px;
 }
 
+.calendar-title-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.calendar-view-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.calendar-view-toggle .small-btn {
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
+.calendar-view-toggle .small-btn.is-active {
+  background: #ffffff;
+  color: #274d1f;
+  font-weight: 700;
+}
+
 .dday-summary {
   margin-bottom: 6px;
   padding: 8px 10px;
