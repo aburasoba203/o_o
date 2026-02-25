@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const calendarEl = document.getElementById("calendar");
   const ddaySummaryEl = document.getElementById("ddaySummary");
 
@@ -9,7 +9,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const CALENDAR_VIEW_MODE_KEY = "calendarViewMode";
   const CALENDAR_VIEW_ANCHORS_KEY = "calendarViewAnchors";
   const DECOR_ITEMS_KEY = "calendarDecorItemsByMonth";
-  const DOG_IMAGES = Array.from({ length: 18 }, (_, i) => `mydog/dog${i + 1}.png`);
+  const DECOR_IMAGE_MANIFEST_URL = "mydog/manifest.json";
+  const DECOR_IMAGE_MANIFEST_CACHE_KEY = "calendarDecorImageManifest";
+  let dogImages = [];
+  const decorImageRatios = {};
   let decorItemsByMonth = JSON.parse(localStorage.getItem(DECOR_ITEMS_KEY) || "{}");
   let decorItems = [];
   let currentDecorScopeKey = "";
@@ -64,6 +67,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function saveCalendarViewAnchors() {
     localStorage.setItem(CALENDAR_VIEW_ANCHORS_KEY, JSON.stringify(calendarViewAnchors));
+  }
+
+  function normalizeDecorImageList(list) {
+    if (!Array.isArray(list)) return [];
+    return list
+      .map(item => String(item || "").trim())
+      .filter(Boolean)
+      .map(item => item.startsWith("mydog/") ? item : `mydog/${item}`)
+      .filter(item => /\.(png|jpe?g|webp|gif|svg)$/i.test(item));
+  }
+
+  async function loadDecorImageManifest() {
+    try {
+      const response = await fetch(DECOR_IMAGE_MANIFEST_URL, { cache: "no-store" });
+      if (!response.ok) throw new Error(`manifest http ${response.status}`);
+      const data = await response.json();
+      const list = normalizeDecorImageList(Array.isArray(data) ? data : data?.images);
+      if (list.length > 0) {
+        dogImages = list;
+        localStorage.setItem(DECOR_IMAGE_MANIFEST_CACHE_KEY, JSON.stringify(list));
+        return;
+      }
+      throw new Error("empty manifest");
+    } catch (_) {
+      const cached = JSON.parse(localStorage.getItem(DECOR_IMAGE_MANIFEST_CACHE_KEY) || "[]");
+      dogImages = normalizeDecorImageList(cached);
+    }
   }
 
   function formatStudyTime(ms) {
@@ -357,9 +387,10 @@ document.addEventListener("DOMContentLoaded", () => {
         src: String(item.src || ""),
         x: Number.isFinite(item.x) ? item.x : 20,
         y: Number.isFinite(item.y) ? item.y : 20,
-        size: Number.isFinite(item.size) ? item.size : 56
+        size: Number.isFinite(item.size) ? item.size : 56,
+        ratio: Number.isFinite(item.ratio) && item.ratio > 0 ? item.ratio : 1
       }))
-      .filter(item => DOG_IMAGES.includes(item.src));
+      .filter(item => dogImages.length === 0 || dogImages.includes(item.src));
   }
 
   function migrateLegacyDecorStorageIfNeeded() {
@@ -398,9 +429,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  migrateLegacyDecorStorageIfNeeded();
-  loadDecorItemsForCurrentMonth();
-
   function getCalendarStage() {
     return document.getElementById("calendarStage");
   }
@@ -412,8 +440,11 @@ document.addEventListener("DOMContentLoaded", () => {
   function clampDecorItem(item) {
     const stage = getCalendarStage();
     if (!stage) return item;
-    const maxX = Math.max(0, stage.clientWidth - item.size);
-    const maxY = Math.max(0, stage.clientHeight - item.size);
+    const ratio = Number.isFinite(item.ratio) && item.ratio > 0 ? item.ratio : 1;
+    const width = ratio >= 1 ? item.size : item.size * ratio;
+    const height = ratio >= 1 ? item.size / ratio : item.size;
+    const maxX = Math.max(0, stage.clientWidth - width);
+    const maxY = Math.max(0, stage.clientHeight - height);
     item.x = Math.min(Math.max(0, item.x), maxX);
     item.y = Math.min(Math.max(0, item.y), maxY);
     return item;
@@ -447,8 +478,11 @@ document.addEventListener("DOMContentLoaded", () => {
       sticker.alt = "";
       sticker.draggable = false;
       sticker.dataset.id = item.id;
-      sticker.style.width = `${item.size}px`;
-      sticker.style.height = `${item.size}px`;
+      const ratio = Number.isFinite(item.ratio) && item.ratio > 0 ? item.ratio : 1;
+      const width = ratio >= 1 ? item.size : item.size * ratio;
+      const height = ratio >= 1 ? item.size / ratio : item.size;
+      sticker.style.width = `${width}px`;
+      sticker.style.height = `${height}px`;
       sticker.style.left = `${item.x}px`;
       sticker.style.top = `${item.y}px`;
       sticker.addEventListener("pointerdown", startDecorDrag);
@@ -458,12 +492,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function addDecorItem(src) {
+    const ratio = Number.isFinite(decorImageRatios[src]) && decorImageRatios[src] > 0
+      ? decorImageRatios[src]
+      : 1;
     const item = clampDecorItem({
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       src,
       x: 12 + (decorItems.length % 6) * 14,
       y: 12 + (decorItems.length % 4) * 14,
-      size: 56
+      size: 56,
+      ratio
     });
     decorItems.push(item);
     selectedDecorItemId = item.id;
@@ -475,15 +513,40 @@ document.addEventListener("DOMContentLoaded", () => {
     const listEl = document.getElementById("decorThumbList");
     if (!listEl) return;
     listEl.innerHTML = "";
-    DOG_IMAGES.forEach(src => {
+    dogImages.forEach(src => {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "decor-thumb-btn";
       button.title = "클릭해서 배치";
       button.innerHTML = `<img src="${src}" alt="">`;
+      const img = button.querySelector("img");
+      img?.addEventListener("load", () => {
+        if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+          decorImageRatios[src] = img.naturalWidth / img.naturalHeight;
+          let updated = false;
+          decorItems.forEach(item => {
+            if (item.src === src && (!Number.isFinite(item.ratio) || item.ratio <= 0 || item.ratio === 1)) {
+              item.ratio = decorImageRatios[src];
+              clampDecorItem(item);
+              updated = true;
+            }
+          });
+          if (updated) {
+            saveDecorItems();
+            renderDecorItems();
+          }
+        }
+      });
       button.addEventListener("click", () => addDecorItem(src));
       listEl.appendChild(button);
     });
+
+    if (dogImages.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "decor-thumb-empty";
+      empty.textContent = "mydog/manifest.json에 이미지 목록을 넣어주세요.";
+      listEl.appendChild(empty);
+    }
   }
 
   function toggleDecorPalette() {
@@ -581,6 +644,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  await loadDecorImageManifest();
+  migrateLegacyDecorStorageIfNeeded();
+  loadDecorItemsForCurrentMonth();
   updateDdaySummary();
   renderDecorPalette();
   calendar.render();
