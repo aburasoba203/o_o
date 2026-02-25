@@ -86,6 +86,134 @@ body:not(.calendar-page) .container {
   }
 }
 
+/* 휴대폰 가로모드(width > height)에서 조작 영역을 압축하고 화면 활용도를 높임 */
+@media (orientation: landscape) and (max-height: 600px) {
+  body:not(.calendar-page) {
+    grid-template-rows: auto 1fr;
+  }
+
+  .app-nav {
+    gap: 6px;
+    padding: 6px 8px;
+    margin-bottom: 6px;
+  }
+
+  .nav-links,
+  .nav-tools,
+  .nav-actions-right {
+    gap: 6px;
+  }
+
+  .app-nav button {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .shift-btn {
+    padding: 0;
+  }
+
+  .container {
+    width: min(720px, calc(100% - 16px));
+    margin-top: 4px;
+  }
+
+  body:not(.calendar-page) .container {
+    align-self: start;
+  }
+
+  .top-bar {
+    margin-bottom: 6px;
+    gap: 6px;
+    font-size: 13px;
+  }
+
+  .card {
+    padding: 18px 16px;
+    border-radius: 12px;
+  }
+
+  #word {
+    font-size: 24px;
+    margin: 0 0 10px;
+  }
+
+  input,
+  #wordImportTextarea {
+    font-size: 14px;
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+
+  #wordImportTextarea {
+    min-height: 120px;
+  }
+
+  #result {
+    margin-top: 8px;
+    font-size: 14px;
+  }
+
+  .bottom-controls {
+    margin-top: 8px;
+  }
+
+  .bottom-controls button {
+    margin: 3px;
+  }
+
+  .result-page {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .record-box {
+    max-height: 44vh;
+  }
+
+  .calendar-page {
+    overflow: auto;
+  }
+
+  .calendar-container {
+    width: min(1000px, calc(100% - 12px));
+    margin-top: 4px;
+  }
+
+  .calendar-container h1 {
+    margin: 4px 0;
+    font-size: 20px;
+  }
+
+  .dday-summary {
+    margin-bottom: 4px;
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  .calendar-help {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  #calendar {
+    padding: 4px;
+    border-radius: 10px;
+  }
+
+  .word-import-modal,
+  .custom-words-modal,
+  .help-modal {
+    max-height: 88vh;
+    padding: 12px;
+  }
+
+  .custom-words-list,
+  .help-modal-content {
+    max-height: 52vh;
+  }
+}
+
 .auth-status {
   font-size: 12px;
   color: #f3f7ff;
