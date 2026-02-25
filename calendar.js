@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let decorItems = [];
   let currentDecorScopeKey = "";
   let decorDragState = null;
+  let selectedDecorItemId = null;
   let calendar = null;
   let calendarViewMode = localStorage.getItem(CALENDAR_VIEW_MODE_KEY) === "week" ? "week" : "month";
   let calendarViewAnchors = JSON.parse(localStorage.getItem(CALENDAR_VIEW_ANCHORS_KEY) || "null") || {};
@@ -392,6 +393,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     decorItems = normalizeDecorItems(items || []);
+    if (!decorItems.some(item => item.id === selectedDecorItemId)) {
+      selectedDecorItemId = null;
+    }
   }
 
   migrateLegacyDecorStorageIfNeeded();
@@ -415,6 +419,19 @@ document.addEventListener("DOMContentLoaded", () => {
     return item;
   }
 
+  function getSelectedDecorItem() {
+    return decorItems.find(item => item.id === selectedDecorItemId) || null;
+  }
+
+  function updateDecorSizeStatus() {
+    const statusEl = document.getElementById("decorSizeStatus");
+    if (!statusEl) return;
+    const selected = getSelectedDecorItem();
+    statusEl.textContent = selected
+      ? `선택됨: ${Math.round(selected.size)}px`
+      : "선택한 스티커 없음";
+  }
+
   function renderDecorItems() {
     const layer = getDecorLayer();
     if (!layer) return;
@@ -423,6 +440,9 @@ document.addEventListener("DOMContentLoaded", () => {
     decorItems.forEach(item => {
       const sticker = document.createElement("img");
       sticker.className = "calendar-decor-item";
+      if (item.id === selectedDecorItemId) {
+        sticker.classList.add("is-selected");
+      }
       sticker.src = item.src;
       sticker.alt = "";
       sticker.draggable = false;
@@ -434,6 +454,7 @@ document.addEventListener("DOMContentLoaded", () => {
       sticker.addEventListener("pointerdown", startDecorDrag);
       layer.appendChild(sticker);
     });
+    updateDecorSizeStatus();
   }
 
   function addDecorItem(src) {
@@ -445,6 +466,7 @@ document.addEventListener("DOMContentLoaded", () => {
       size: 56
     });
     decorItems.push(item);
+    selectedDecorItemId = item.id;
     saveDecorItems();
     renderDecorItems();
   }
@@ -473,6 +495,19 @@ document.addEventListener("DOMContentLoaded", () => {
   function clearDecorItems() {
     if (!confirm("꾸미기를 모두 지우시겠습니끼?")) return;
     decorItems = [];
+    selectedDecorItemId = null;
+    saveDecorItems();
+    renderDecorItems();
+  }
+
+  function resizeSelectedDecorItem(delta) {
+    const item = getSelectedDecorItem();
+    if (!item) {
+      alert("크기 조절할 스티커를 먼저 눌러주세요.");
+      return;
+    }
+    item.size = Math.min(120, Math.max(28, item.size + delta));
+    clampDecorItem(item);
     saveDecorItems();
     renderDecorItems();
   }
@@ -484,6 +519,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!itemId || !stage) return;
     const item = decorItems.find(v => v.id === itemId);
     if (!item) return;
+    selectedDecorItemId = itemId;
 
     const rect = stage.getBoundingClientRect();
     decorDragState = {
@@ -493,6 +529,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     target.setPointerCapture?.(event.pointerId);
     event.preventDefault();
+    renderDecorItems();
   }
 
   function handleDecorPointerMove(event) {
@@ -517,6 +554,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.toggleDecorPalette = toggleDecorPalette;
   window.clearDecorItems = clearDecorItems;
+  window.resizeSelectedDecorItem = resizeSelectedDecorItem;
   window.setCalendarViewMode = setCalendarViewMode;
 
   calendar = new FullCalendar.Calendar(calendarEl, {
