@@ -6,6 +6,13 @@ document.addEventListener("DOMContentLoaded", () => {
   let schedules = JSON.parse(localStorage.getItem("schedule")) || {};
   let exams = JSON.parse(localStorage.getItem("exam")) || {};
   let studyTime = JSON.parse(localStorage.getItem("studyTime")) || {};
+  const DECOR_ITEMS_KEY = "calendarDecorItemsByMonth";
+  const DOG_IMAGES = Array.from({ length: 18 }, (_, i) => `mydog/dog${i + 1}.png`);
+  let decorItemsByMonth = JSON.parse(localStorage.getItem(DECOR_ITEMS_KEY) || "{}");
+  let decorItems = [];
+  let currentDecorMonthKey = "";
+  let decorDragState = null;
+  let calendar = null;
 
   function toDateOnly(dateString) {
     return new Date(`${dateString}T00:00:00`);
@@ -18,9 +25,20 @@ document.addEventListener("DOMContentLoaded", () => {
     return `${year}-${month}-${day}`;
   }
 
+  function formatMonthKey(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    return `${year}-${month}`;
+  }
+
   function getTodayDateOnly() {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+
+  function getCurrentCalendarMonthKey() {
+    if (calendar) return formatMonthKey(calendar.getDate());
+    return formatMonthKey(getTodayDateOnly());
   }
 
   function formatStudyTime(ms) {
@@ -267,7 +285,169 @@ document.addEventListener("DOMContentLoaded", () => {
     return Math.max(380, window.innerHeight - reservedHeight);
   }
 
-  const calendar = new FullCalendar.Calendar(calendarEl, {
+  function saveDecorItems() {
+    decorItemsByMonth[currentDecorMonthKey] = decorItems;
+    localStorage.setItem(DECOR_ITEMS_KEY, JSON.stringify(decorItemsByMonth));
+  }
+
+  function normalizeDecorItems(items) {
+    return (Array.isArray(items) ? items : [])
+      .map(item => ({
+        id: String(item.id || `${Date.now()}-${Math.random()}`),
+        src: String(item.src || ""),
+        x: Number.isFinite(item.x) ? item.x : 20,
+        y: Number.isFinite(item.y) ? item.y : 20,
+        size: Number.isFinite(item.size) ? item.size : 56
+      }))
+      .filter(item => DOG_IMAGES.includes(item.src));
+  }
+
+  function migrateLegacyDecorStorageIfNeeded() {
+    if (Array.isArray(decorItemsByMonth)) {
+      const legacyItems = normalizeDecorItems(decorItemsByMonth);
+      decorItemsByMonth = {};
+      if (legacyItems.length > 0) {
+        decorItemsByMonth[getCurrentCalendarMonthKey()] = legacyItems;
+      }
+      localStorage.setItem(DECOR_ITEMS_KEY, JSON.stringify(decorItemsByMonth));
+      return;
+    }
+
+    if (!decorItemsByMonth || typeof decorItemsByMonth !== "object") {
+      decorItemsByMonth = {};
+    }
+  }
+
+  function loadDecorItemsForCurrentMonth() {
+    currentDecorMonthKey = getCurrentCalendarMonthKey();
+    decorItems = normalizeDecorItems(decorItemsByMonth[currentDecorMonthKey] || []);
+  }
+
+  migrateLegacyDecorStorageIfNeeded();
+  loadDecorItemsForCurrentMonth();
+
+  function getCalendarStage() {
+    return document.getElementById("calendarStage");
+  }
+
+  function getDecorLayer() {
+    return document.getElementById("calendarDecorLayer");
+  }
+
+  function clampDecorItem(item) {
+    const stage = getCalendarStage();
+    if (!stage) return item;
+    const maxX = Math.max(0, stage.clientWidth - item.size);
+    const maxY = Math.max(0, stage.clientHeight - item.size);
+    item.x = Math.min(Math.max(0, item.x), maxX);
+    item.y = Math.min(Math.max(0, item.y), maxY);
+    return item;
+  }
+
+  function renderDecorItems() {
+    const layer = getDecorLayer();
+    if (!layer) return;
+    layer.innerHTML = "";
+
+    decorItems.forEach(item => {
+      const sticker = document.createElement("img");
+      sticker.className = "calendar-decor-item";
+      sticker.src = item.src;
+      sticker.alt = "";
+      sticker.draggable = false;
+      sticker.dataset.id = item.id;
+      sticker.style.width = `${item.size}px`;
+      sticker.style.height = `${item.size}px`;
+      sticker.style.left = `${item.x}px`;
+      sticker.style.top = `${item.y}px`;
+      sticker.addEventListener("pointerdown", startDecorDrag);
+      layer.appendChild(sticker);
+    });
+  }
+
+  function addDecorItem(src) {
+    const item = clampDecorItem({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      src,
+      x: 12 + (decorItems.length % 6) * 14,
+      y: 12 + (decorItems.length % 4) * 14,
+      size: 56
+    });
+    decorItems.push(item);
+    saveDecorItems();
+    renderDecorItems();
+  }
+
+  function renderDecorPalette() {
+    const listEl = document.getElementById("decorThumbList");
+    if (!listEl) return;
+    listEl.innerHTML = "";
+    DOG_IMAGES.forEach(src => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "decor-thumb-btn";
+      button.title = "클릭해서 배치";
+      button.innerHTML = `<img src="${src}" alt="">`;
+      button.addEventListener("click", () => addDecorItem(src));
+      listEl.appendChild(button);
+    });
+  }
+
+  function toggleDecorPalette() {
+    const palette = document.getElementById("decorPalette");
+    if (!palette) return;
+    palette.hidden = !palette.hidden;
+  }
+
+  function clearDecorItems() {
+    if (!confirm("꾸미기를 모두 지우시겠습니끼?")) return;
+    decorItems = [];
+    saveDecorItems();
+    renderDecorItems();
+  }
+
+  function startDecorDrag(event) {
+    const target = event.currentTarget;
+    const itemId = target?.dataset?.id;
+    const stage = getCalendarStage();
+    if (!itemId || !stage) return;
+    const item = decorItems.find(v => v.id === itemId);
+    if (!item) return;
+
+    const rect = stage.getBoundingClientRect();
+    decorDragState = {
+      id: itemId,
+      offsetX: event.clientX - rect.left - item.x,
+      offsetY: event.clientY - rect.top - item.y
+    };
+    target.setPointerCapture?.(event.pointerId);
+    event.preventDefault();
+  }
+
+  function handleDecorPointerMove(event) {
+    if (!decorDragState) return;
+    const stage = getCalendarStage();
+    if (!stage) return;
+    const item = decorItems.find(v => v.id === decorDragState.id);
+    if (!item) return;
+    const rect = stage.getBoundingClientRect();
+
+    item.x = event.clientX - rect.left - decorDragState.offsetX;
+    item.y = event.clientY - rect.top - decorDragState.offsetY;
+    clampDecorItem(item);
+    renderDecorItems();
+  }
+
+  function handleDecorPointerUp() {
+    if (!decorDragState) return;
+    decorDragState = null;
+    saveDecorItems();
+  }
+
+  window.toggleDecorPalette = toggleDecorPalette;
+  window.clearDecorItems = clearDecorItems;
+
+  calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: "dayGridMonth",
     height: getCalendarHeight(),
     selectable: true,
@@ -276,7 +456,9 @@ document.addEventListener("DOMContentLoaded", () => {
       openDateActionModal(formatDateKey(info.date));
     },
     datesSet() {
+      loadDecorItemsForCurrentMonth();
       refreshAttendanceStyles();
+      renderDecorItems();
     },
     dayCellDidMount(info) {
       info.el.title = "클릭해서 일정 추가";
@@ -287,7 +469,12 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   updateDdaySummary();
+  renderDecorPalette();
   calendar.render();
+  loadDecorItemsForCurrentMonth();
   refreshAttendanceStyles();
+  renderDecorItems();
+  window.addEventListener("pointermove", handleDecorPointerMove);
+  window.addEventListener("pointerup", handleDecorPointerUp);
   openTodayAttendancePopupIfNeeded();
 });
