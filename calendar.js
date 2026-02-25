@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const calendarEl = document.getElementById("calendar");
   const ddaySummaryEl = document.getElementById("ddaySummary");
 
@@ -6,6 +6,21 @@ document.addEventListener("DOMContentLoaded", () => {
   let schedules = JSON.parse(localStorage.getItem("schedule")) || {};
   let exams = JSON.parse(localStorage.getItem("exam")) || {};
   let studyTime = JSON.parse(localStorage.getItem("studyTime")) || {};
+  const CALENDAR_VIEW_MODE_KEY = "calendarViewMode";
+  const CALENDAR_VIEW_ANCHORS_KEY = "calendarViewAnchors";
+  const DECOR_ITEMS_KEY = "calendarDecorItemsByMonth";
+  const DECOR_IMAGE_MANIFEST_URL = "mydog/manifest.json";
+  const DECOR_IMAGE_MANIFEST_CACHE_KEY = "calendarDecorImageManifest";
+  let dogImages = [];
+  const decorImageRatios = {};
+  let decorItemsByMonth = JSON.parse(localStorage.getItem(DECOR_ITEMS_KEY) || "{}");
+  let decorItems = [];
+  let currentDecorScopeKey = "";
+  let decorDragState = null;
+  let selectedDecorItemId = null;
+  let calendar = null;
+  let calendarViewMode = localStorage.getItem(CALENDAR_VIEW_MODE_KEY) === "week" ? "week" : "month";
+  let calendarViewAnchors = JSON.parse(localStorage.getItem(CALENDAR_VIEW_ANCHORS_KEY) || "null") || {};
 
   function toDateOnly(dateString) {
     return new Date(`${dateString}T00:00:00`);
@@ -18,9 +33,67 @@ document.addEventListener("DOMContentLoaded", () => {
     return `${year}-${month}-${day}`;
   }
 
+  function formatMonthKey(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    return `${year}-${month}`;
+  }
+
   function getTodayDateOnly() {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+
+  function getCurrentCalendarMonthKey() {
+    if (calendar) return formatMonthKey(calendar.getDate());
+    return formatMonthKey(getTodayDateOnly());
+  }
+
+  function getWeekStartDate(date) {
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const day = d.getDay(); // 0 Sun ~ 6 Sat
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diffToMonday);
+    return d;
+  }
+
+  function getCurrentDecorScopeKey() {
+    const baseDate = calendar ? calendar.getDate() : getTodayDateOnly();
+    if (calendarViewMode === "week") {
+      return `week:${formatDateKey(getWeekStartDate(baseDate))}`;
+    }
+    return `month:${formatMonthKey(baseDate)}`;
+  }
+
+  function saveCalendarViewAnchors() {
+    localStorage.setItem(CALENDAR_VIEW_ANCHORS_KEY, JSON.stringify(calendarViewAnchors));
+  }
+
+  function normalizeDecorImageList(list) {
+    if (!Array.isArray(list)) return [];
+    return list
+      .map(item => String(item || "").trim())
+      .filter(Boolean)
+      .map(item => item.startsWith("mydog/") ? item : `mydog/${item}`)
+      .filter(item => /\.(png|jpe?g|webp|gif|svg)$/i.test(item));
+  }
+
+  async function loadDecorImageManifest() {
+    try {
+      const response = await fetch(DECOR_IMAGE_MANIFEST_URL, { cache: "no-store" });
+      if (!response.ok) throw new Error(`manifest http ${response.status}`);
+      const data = await response.json();
+      const list = normalizeDecorImageList(Array.isArray(data) ? data : data?.images);
+      if (list.length > 0) {
+        dogImages = list;
+        localStorage.setItem(DECOR_IMAGE_MANIFEST_CACHE_KEY, JSON.stringify(list));
+        return;
+      }
+      throw new Error("empty manifest");
+    } catch (_) {
+      const cached = JSON.parse(localStorage.getItem(DECOR_IMAGE_MANIFEST_CACHE_KEY) || "[]");
+      dogImages = normalizeDecorImageList(cached);
+    }
   }
 
   function formatStudyTime(ms) {
@@ -267,13 +340,301 @@ document.addEventListener("DOMContentLoaded", () => {
     return Math.max(380, window.innerHeight - reservedHeight);
   }
 
-  const calendar = new FullCalendar.Calendar(calendarEl, {
+  function updateCalendarViewButtons() {
+    const monthBtn = document.getElementById("calendarMonthViewBtn");
+    const weekBtn = document.getElementById("calendarWeekViewBtn");
+    if (!monthBtn || !weekBtn) return;
+
+    monthBtn.classList.toggle("is-active", calendarViewMode === "month");
+    weekBtn.classList.toggle("is-active", calendarViewMode === "week");
+  }
+
+  function applyCalendarViewMode(mode) {
+    if (!calendar) return;
+    const previousMode = calendarViewMode;
+    calendarViewAnchors[previousMode] = formatDateKey(calendar.getDate());
+    saveCalendarViewAnchors();
+
+    calendarViewMode = mode === "week" ? "week" : "month";
+    localStorage.setItem(CALENDAR_VIEW_MODE_KEY, calendarViewMode);
+    const targetDate = calendarViewAnchors[calendarViewMode] || formatDateKey(getTodayDateOnly());
+
+    if (calendarViewMode === "week") {
+      calendar.setOption("hiddenDays", [0, 6]);
+      calendar.changeView("dayGridWeek", targetDate);
+    } else {
+      calendar.setOption("hiddenDays", []);
+      calendar.changeView("dayGridMonth", targetDate);
+    }
+
+    updateCalendarViewButtons();
+    renderDecorItems();
+  }
+
+  function setCalendarViewMode(mode) {
+    applyCalendarViewMode(mode);
+  }
+
+  function saveDecorItems() {
+    decorItemsByMonth[currentDecorScopeKey] = decorItems;
+    localStorage.setItem(DECOR_ITEMS_KEY, JSON.stringify(decorItemsByMonth));
+  }
+
+  function normalizeDecorItems(items) {
+    return (Array.isArray(items) ? items : [])
+      .map(item => ({
+        id: String(item.id || `${Date.now()}-${Math.random()}`),
+        src: String(item.src || ""),
+        x: Number.isFinite(item.x) ? item.x : 20,
+        y: Number.isFinite(item.y) ? item.y : 20,
+        size: Number.isFinite(item.size) ? item.size : 56,
+        ratio: Number.isFinite(item.ratio) && item.ratio > 0 ? item.ratio : 1
+      }))
+      .filter(item => dogImages.length === 0 || dogImages.includes(item.src));
+  }
+
+  function migrateLegacyDecorStorageIfNeeded() {
+    if (Array.isArray(decorItemsByMonth)) {
+      const legacyItems = normalizeDecorItems(decorItemsByMonth);
+      decorItemsByMonth = {};
+      if (legacyItems.length > 0) {
+        decorItemsByMonth[`month:${getCurrentCalendarMonthKey()}`] = legacyItems;
+      }
+      localStorage.setItem(DECOR_ITEMS_KEY, JSON.stringify(decorItemsByMonth));
+      return;
+    }
+
+    if (!decorItemsByMonth || typeof decorItemsByMonth !== "object") {
+      decorItemsByMonth = {};
+    }
+  }
+
+  function loadDecorItemsForCurrentMonth() {
+    currentDecorScopeKey = getCurrentDecorScopeKey();
+    let items = decorItemsByMonth[currentDecorScopeKey];
+
+    if (!items && calendarViewMode === "month") {
+      const legacyMonthKey = getCurrentCalendarMonthKey();
+      if (Array.isArray(decorItemsByMonth[legacyMonthKey])) {
+        items = decorItemsByMonth[legacyMonthKey];
+        decorItemsByMonth[currentDecorScopeKey] = normalizeDecorItems(items);
+        delete decorItemsByMonth[legacyMonthKey];
+        localStorage.setItem(DECOR_ITEMS_KEY, JSON.stringify(decorItemsByMonth));
+      }
+    }
+
+    decorItems = normalizeDecorItems(items || []);
+    if (!decorItems.some(item => item.id === selectedDecorItemId)) {
+      selectedDecorItemId = null;
+    }
+  }
+
+  function getCalendarStage() {
+    return document.getElementById("calendarStage");
+  }
+
+  function getDecorLayer() {
+    return document.getElementById("calendarDecorLayer");
+  }
+
+  function clampDecorItem(item) {
+    const stage = getCalendarStage();
+    if (!stage) return item;
+    const ratio = Number.isFinite(item.ratio) && item.ratio > 0 ? item.ratio : 1;
+    const width = ratio >= 1 ? item.size : item.size * ratio;
+    const height = ratio >= 1 ? item.size / ratio : item.size;
+    const maxX = Math.max(0, stage.clientWidth - width);
+    const maxY = Math.max(0, stage.clientHeight - height);
+    item.x = Math.min(Math.max(0, item.x), maxX);
+    item.y = Math.min(Math.max(0, item.y), maxY);
+    return item;
+  }
+
+  function getSelectedDecorItem() {
+    return decorItems.find(item => item.id === selectedDecorItemId) || null;
+  }
+
+  function updateDecorSizeStatus() {
+    const statusEl = document.getElementById("decorSizeStatus");
+    if (!statusEl) return;
+    const selected = getSelectedDecorItem();
+    statusEl.textContent = selected
+      ? `선택됨: ${Math.round(selected.size)}px`
+      : "선택한 스티커 없음";
+  }
+
+  function renderDecorItems() {
+    const layer = getDecorLayer();
+    if (!layer) return;
+    layer.innerHTML = "";
+
+    decorItems.forEach(item => {
+      const sticker = document.createElement("img");
+      sticker.className = "calendar-decor-item";
+      if (item.id === selectedDecorItemId) {
+        sticker.classList.add("is-selected");
+      }
+      sticker.src = item.src;
+      sticker.alt = "";
+      sticker.draggable = false;
+      sticker.dataset.id = item.id;
+      const ratio = Number.isFinite(item.ratio) && item.ratio > 0 ? item.ratio : 1;
+      const width = ratio >= 1 ? item.size : item.size * ratio;
+      const height = ratio >= 1 ? item.size / ratio : item.size;
+      sticker.style.width = `${width}px`;
+      sticker.style.height = `${height}px`;
+      sticker.style.left = `${item.x}px`;
+      sticker.style.top = `${item.y}px`;
+      sticker.addEventListener("pointerdown", startDecorDrag);
+      layer.appendChild(sticker);
+    });
+    updateDecorSizeStatus();
+  }
+
+  function addDecorItem(src) {
+    const ratio = Number.isFinite(decorImageRatios[src]) && decorImageRatios[src] > 0
+      ? decorImageRatios[src]
+      : 1;
+    const item = clampDecorItem({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      src,
+      x: 12 + (decorItems.length % 6) * 14,
+      y: 12 + (decorItems.length % 4) * 14,
+      size: 56,
+      ratio
+    });
+    decorItems.push(item);
+    selectedDecorItemId = item.id;
+    saveDecorItems();
+    renderDecorItems();
+  }
+
+  function renderDecorPalette() {
+    const listEl = document.getElementById("decorThumbList");
+    if (!listEl) return;
+    listEl.innerHTML = "";
+    dogImages.forEach(src => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "decor-thumb-btn";
+      button.title = "클릭해서 배치";
+      button.innerHTML = `<img src="${src}" alt="">`;
+      const img = button.querySelector("img");
+      img?.addEventListener("load", () => {
+        if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+          decorImageRatios[src] = img.naturalWidth / img.naturalHeight;
+          let updated = false;
+          decorItems.forEach(item => {
+            if (item.src === src && (!Number.isFinite(item.ratio) || item.ratio <= 0 || item.ratio === 1)) {
+              item.ratio = decorImageRatios[src];
+              clampDecorItem(item);
+              updated = true;
+            }
+          });
+          if (updated) {
+            saveDecorItems();
+            renderDecorItems();
+          }
+        }
+      });
+      button.addEventListener("click", () => addDecorItem(src));
+      listEl.appendChild(button);
+    });
+
+    if (dogImages.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "decor-thumb-empty";
+      empty.textContent = "mydog/manifest.json에 이미지 목록을 넣어주세요.";
+      listEl.appendChild(empty);
+    }
+  }
+
+  function toggleDecorPalette() {
+    const palette = document.getElementById("decorPalette");
+    if (!palette) return;
+    palette.hidden = !palette.hidden;
+  }
+
+  function clearDecorItems() {
+    if (!confirm("꾸미기를 모두 지우시겠습니끼?")) return;
+    decorItems = [];
+    selectedDecorItemId = null;
+    saveDecorItems();
+    renderDecorItems();
+  }
+
+  function resizeSelectedDecorItem(delta) {
+    const item = getSelectedDecorItem();
+    if (!item) {
+      alert("크기 조절할 스티커를 먼저 눌러주세요.");
+      return;
+    }
+    item.size = Math.min(120, Math.max(28, item.size + delta));
+    clampDecorItem(item);
+    saveDecorItems();
+    renderDecorItems();
+  }
+
+  function startDecorDrag(event) {
+    const target = event.currentTarget;
+    const itemId = target?.dataset?.id;
+    const stage = getCalendarStage();
+    if (!itemId || !stage) return;
+    const item = decorItems.find(v => v.id === itemId);
+    if (!item) return;
+    selectedDecorItemId = itemId;
+
+    const rect = stage.getBoundingClientRect();
+    decorDragState = {
+      id: itemId,
+      offsetX: event.clientX - rect.left - item.x,
+      offsetY: event.clientY - rect.top - item.y
+    };
+    target.setPointerCapture?.(event.pointerId);
+    event.preventDefault();
+    renderDecorItems();
+  }
+
+  function handleDecorPointerMove(event) {
+    if (!decorDragState) return;
+    const stage = getCalendarStage();
+    if (!stage) return;
+    const item = decorItems.find(v => v.id === decorDragState.id);
+    if (!item) return;
+    const rect = stage.getBoundingClientRect();
+
+    item.x = event.clientX - rect.left - decorDragState.offsetX;
+    item.y = event.clientY - rect.top - decorDragState.offsetY;
+    clampDecorItem(item);
+    renderDecorItems();
+  }
+
+  function handleDecorPointerUp() {
+    if (!decorDragState) return;
+    decorDragState = null;
+    saveDecorItems();
+  }
+
+  window.toggleDecorPalette = toggleDecorPalette;
+  window.clearDecorItems = clearDecorItems;
+  window.resizeSelectedDecorItem = resizeSelectedDecorItem;
+  window.setCalendarViewMode = setCalendarViewMode;
+
+  calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: "dayGridMonth",
     height: getCalendarHeight(),
+    firstDay: 1,
     selectable: true,
     events: buildEvents(),
     dateClick(info) {
       openDateActionModal(formatDateKey(info.date));
+    },
+    datesSet() {
+      calendarViewAnchors[calendarViewMode] = formatDateKey(calendar.getDate());
+      saveCalendarViewAnchors();
+      loadDecorItemsForCurrentMonth();
+      refreshAttendanceStyles();
+      renderDecorItems();
     },
     dayCellDidMount(info) {
       info.el.title = "클릭해서 일정 추가";
@@ -283,8 +644,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  await loadDecorImageManifest();
+  migrateLegacyDecorStorageIfNeeded();
+  loadDecorItemsForCurrentMonth();
   updateDdaySummary();
+  renderDecorPalette();
   calendar.render();
+  applyCalendarViewMode(calendarViewMode);
+  updateCalendarViewButtons();
+  loadDecorItemsForCurrentMonth();
   refreshAttendanceStyles();
+  renderDecorItems();
+  window.addEventListener("pointermove", handleDecorPointerMove);
+  window.addEventListener("pointerup", handleDecorPointerUp);
   openTodayAttendancePopupIfNeeded();
 });

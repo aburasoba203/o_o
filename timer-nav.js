@@ -18,6 +18,10 @@ function saveStudyTimerState() {
   localStorage.setItem("studyTimerState", JSON.stringify(studyTimerState));
 }
 
+function getTodayStudyTimeStore() {
+  return JSON.parse(localStorage.getItem("studyTime")) || {};
+}
+
 function resetStudyTimerStateForToday() {
   studyTimerState = {
     date: getTodayDateString(),
@@ -152,6 +156,35 @@ function handleTimerDisplayClick() {
   }
 
   alert("먼저 '순공 타이머 시작' 버튼을 눌러주세듀😁");
+}
+
+function endStudySession() {
+  ensureStudyTimerDate();
+  const elapsedMs = getCurrentStudyElapsedMs();
+
+  if (elapsedMs < 1000) {
+    alert("기록할 순공 시간이 아직 없어요.");
+    return;
+  }
+
+  const today = getTodayDateString();
+  const shouldEnd = confirm(
+    `오늘 학습 종료하시겠습니까?\n\n순공시간 ${formatDuration(elapsedMs)} 이(가) ${today}에 저장됩니다.`
+  );
+  if (!shouldEnd) return;
+
+  const studyTime = getTodayStudyTimeStore();
+  studyTime[today] = (studyTime[today] || 0) + elapsedMs;
+  const todayTotalMs = studyTime[today];
+  localStorage.setItem("studyTime", JSON.stringify(studyTime));
+
+  resetStudyTimerStateForToday();
+  stopStudyTimerTick();
+  updateStudyTimerDisplay();
+
+  alert(
+    `이번 순공 ${formatDuration(elapsedMs)} 저장 완료!\n오늘 누적 순공 ${formatDuration(todayTotalMs)} (캘린더 반영)`
+  );
 }
 
 document.addEventListener("DOMContentLoaded", initializeStudyTimer);
