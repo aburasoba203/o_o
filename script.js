@@ -191,6 +191,18 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  document.addEventListener("click", event => {
+    if (!event.target.closest(".top-menu-wrap")) {
+      closeTopMenu();
+    }
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      closeTopMenu();
+    }
+  });
 });
 
 function getTodayDateString() {
@@ -350,7 +362,7 @@ function endStudySession() {
   const elapsedMs = getCurrentStudyElapsedMs();
 
   if (elapsedMs < 1000) {
-    alert("기록할 순공 시간이 아직 없어요.");
+    alert("기록할 순공 시간이 아직 없습니디.😿");
     return;
   }
 
@@ -465,11 +477,11 @@ function parseWordImportText(text) {
     .filter(Boolean);
 
   if (lines.length === 0) {
-    return { items: [], error: "입력된 내용이 없어요." };
+    return { items: [], error: "입력된 내용이 없습니디.😅" };
   }
 
   if (lines.length % 2 !== 0) {
-    return { items: [], error: "영단어/뜻이 2줄씩 짝이 맞아야 해요." };
+    return { items: [], error: "영단어/뜻이 2줄씩 짝이 맞아야 합니더.😅" };
   }
 
   const items = [];
@@ -482,7 +494,7 @@ function parseWordImportText(text) {
       .filter(Boolean);
 
     if (!word || meanings.length === 0) {
-      return { items: [], error: "빈 단어 또는 뜻이 있어요." };
+      return { items: [], error: "빈 단어 또는 뜻이 있어습니두.😅" };
     }
 
     items.push({ word, meanings });
@@ -491,7 +503,54 @@ function parseWordImportText(text) {
   return { items, error: null };
 }
 
+function buildWordExportText(items) {
+  return (items || [])
+    .map(item => {
+      const word = String(item?.word || "").trim();
+      const meanings = Array.isArray(item?.meanings)
+        ? item.meanings.map(v => String(v).trim()).filter(Boolean)
+        : [];
+      if (!word || meanings.length === 0) return "";
+      return `${word}\n${meanings.join(", ")}`;
+    })
+    .filter(Boolean)
+    .join("\n");
+}
+
+async function copyText(text, successMessage) {
+  if (!text || !String(text).trim()) {
+    alert("복사할 내용이 없어요.");
+    return false;
+  }
+
+  try {
+    await navigator.clipboard.writeText(text);
+    if (successMessage) alert(successMessage);
+    return true;
+  } catch (error) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    try {
+      const copied = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      if (!copied) throw new Error("copy failed");
+      if (successMessage) alert(successMessage);
+      return true;
+    } catch (fallbackError) {
+      if (document.body.contains(textarea)) document.body.removeChild(textarea);
+      alert("복사 권한이 막혀 있끼끼. 직접 복사해주세잉.ㅎ");
+      return false;
+    }
+  }
+}
+
 function openWordImportModal() {
+  closeTopMenu();
   const modal = document.getElementById("wordImportModal");
   const textarea = document.getElementById("wordImportTextarea");
   if (!modal || !textarea) return;
@@ -517,7 +576,7 @@ function renderCustomWordsList() {
   summaryEl.innerText = `${customWords.length}개`;
 
   if (customWords.length === 0) {
-    listEl.innerHTML = '<p class="custom-words-empty">아직 추가한 단어가 없어요.</p>';
+    listEl.innerHTML = '<p class="custom-words-empty">아직 추가한 단어가 없습니두.ㅋ</p>';
     return;
   }
 
@@ -537,7 +596,15 @@ function renderCustomWordsList() {
     .join("");
 }
 
+async function copyCustomWordsList() {
+  const customWords = [...buildWordMap(getCustomWords()).values()]
+    .sort((a, b) => a.word.localeCompare(b.word, "en", { sensitivity: "base" }));
+  const text = buildWordExportText(customWords);
+  await copyText(text, "단어 목록 복사 완료!");
+}
+
 function openCustomWordsModal() {
+  closeTopMenu();
   renderCustomWordsList();
   const modal = document.getElementById("customWordsModal");
   if (!modal) return;
@@ -548,6 +615,25 @@ function closeCustomWordsModal() {
   const modal = document.getElementById("customWordsModal");
   if (!modal) return;
   modal.hidden = true;
+}
+
+function toggleTopMenu() {
+  const dropdown = document.getElementById("topMenuDropdown");
+  const button = document.getElementById("topMenuButton");
+  if (!dropdown || !button) return;
+
+  const isOpen = !dropdown.hidden;
+  dropdown.hidden = isOpen;
+  button.setAttribute("aria-expanded", String(!isOpen));
+}
+
+function closeTopMenu() {
+  const dropdown = document.getElementById("topMenuDropdown");
+  const button = document.getElementById("topMenuButton");
+  if (!dropdown || !button) return;
+
+  dropdown.hidden = true;
+  button.setAttribute("aria-expanded", "false");
 }
 
 function escapeHtml(value) {
@@ -579,8 +665,30 @@ function submitWordImport() {
   closeWordImportModal();
 }
 
+async function loadTestWordsFromRaw() {
+  const textarea = document.getElementById("wordImportTextarea");
+  if (!textarea) return;
+
+  try {
+    const response = await fetch("raw.txt");
+    const rawText = await response.text();
+    if (!rawText.trim()) {
+      alert("raw.txt가 비어 있어요.");
+      return;
+    }
+
+    textarea.value = rawText;
+    textarea.focus();
+    alert("테스트용 단어를 불러왔습니덩기덕.😎 이제 추가하면 됩니두ㅋ.");
+  } catch (error) {
+    console.error("raw.txt load failed:", error);
+    alert("raw.txt를 불러오지 못했어요.");
+  }
+}
+
 function resetCustomWords() {
-  const shouldReset = confirm("추가한 단어장만 초기화할까요? (기본 단어는 유지돼요)");
+  closeTopMenu();
+  const shouldReset = confirm("정말 단어장을 초기화할겁니끼?");
   if (!shouldReset) return;
 
   saveCustomWords([]);
@@ -588,7 +696,7 @@ function resetCustomWords() {
   rebuildWords();
   renderCustomWordsList();
   resetQuizStateWithCurrentWords();
-  alert("추가한 단어장을 초기화했어요.");
+  alert("단어장을 초기화했습니두ㅋ");
 }
 
 function saveAccuracy() {
@@ -615,7 +723,45 @@ function getWordsByWordList(wordList) {
   return words.filter(item => wordSet.has(item.word));
 }
 
+function setQuizInputVisibility(isVisible) {
+  const answerInput = document.getElementById("answer");
+  const checkButton = document.getElementById("checkAnswerBtn");
+  if (answerInput) answerInput.hidden = !isVisible;
+  if (checkButton) checkButton.hidden = !isVisible;
+}
+
+function renderEmptyWordState() {
+  currentWord = null;
+  currentIndex = 0;
+  shuffledWords = [];
+  saveProgress();
+  setQuizInputVisibility(false);
+
+  const wordEl = document.getElementById("word");
+  if (wordEl) {
+    wordEl.classList.add("word-empty-state");
+    wordEl.innerHTML =
+      [
+        '<span class="empty-state-emoji">📚</span>',
+        '<span class="empty-state-title">단어가 아직 없습니디.😿</span>',
+        '<span class="empty-state-desc">단어를 추가하면 퀴즈가 자동 생성됩니듀!!</span>',
+        '<button type="button" class="empty-state-add-btn" onclick="openWordImportModal()">+ 단어 추가하기</button>'
+      ].join("");
+  }
+
+  const resultEl = document.getElementById("result");
+  const progressEl = document.getElementById("progress");
+  if (resultEl) resultEl.innerText = "";
+  if (progressEl) progressEl.innerText = "0 / 0";
+}
+
 function showCurrentWord() {
+  if (!words.length) {
+    renderEmptyWordState();
+    return;
+  }
+
+  setQuizInputVisibility(true);
   if (currentIndex >= shuffledWords.length) {
     if (mode === "wrong") {
       const remainingWrongWords = getWordsByWordList(wrongModePendingWords);
@@ -635,7 +781,9 @@ function showCurrentWord() {
   }
 
   currentWord = shuffledWords[currentIndex];
-  document.getElementById("word").innerText = currentWord.word;
+  const wordEl = document.getElementById("word");
+  wordEl.classList.remove("word-empty-state");
+  wordEl.innerText = currentWord.word;
 
   updateProgress();
 }

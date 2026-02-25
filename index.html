@@ -16,25 +16,39 @@
       <button id="studyTimerDisplay" class="timer-chip" onclick="handleTimerDisplayClick()">순공 00:00:00</button>
       <button onclick="endStudySession()">공부 종료</button>
     </div>
-    <div class="nav-actions-right">
-      <button class="small-btn" type="button" onclick="openWordImportModal()">단어 추가하기</button>
-      <button class="small-btn" type="button" onclick="openCustomWordsModal()">단어 목록 보기</button>
-      <button class="small-btn" type="button" onclick="resetCustomWords()">단어장 초기화</button>
-    </div>
   </nav>
 
   <div class="container">
     <div class="top-bar">
       <span class="progress">진행: <span id="progress">0 / 0</span></span>
       <span class="progress" id="accuracy">정답률: 0% (0/0)</span>
-      <button class="small-btn" onclick="location.href='result.html'">오답노트</button>
     </div>
 
     <div class="card">
+      <div class="card-top-actions-right">
+        <div class="top-menu-wrap">
+          <button
+            type="button"
+            class="hamburger"
+            id="topMenuButton"
+            aria-label="메뉴 열기"
+            aria-expanded="false"
+            onclick="toggleTopMenu()"
+          >
+            <span></span>
+          </button>
+          <div id="topMenuDropdown" class="top-menu-dropdown" hidden>
+            <button type="button" class="top-menu-item" onclick="closeTopMenu(); location.href='result.html'">오답노트</button>
+            <button type="button" class="top-menu-item" onclick="openWordImportModal()">단어 추가하기</button>
+            <button type="button" class="top-menu-item" onclick="openCustomWordsModal()">단어 목록 보기</button>
+            <button type="button" class="top-menu-item danger" onclick="resetCustomWords()">단어장 초기화</button>
+          </div>
+        </div>
+      </div>
       <h1 id="word">단어 마추기</h1>
 
       <input type="text" id="answer" placeholder="정답을 입력해주세듀" />
-      <button onclick="checkAnswer()">확인</button>
+      <button id="checkAnswerBtn" onclick="checkAnswer()">확인</button>
 
       <p id="result"></p>
     </div>
@@ -57,6 +71,7 @@
       ></textarea>
       <div class="word-import-actions">
         <button type="button" onclick="submitWordImport()">추가</button>
+        <button type="button" class="small-btn" onclick="loadTestWordsFromRaw()">테스트용 단어</button>
         <button type="button" class="small-btn" onclick="closeWordImportModal()">닫기</button>
       </div>
     </div>
@@ -68,6 +83,7 @@
       <p id="customWordsSummary">0개</p>
       <div id="customWordsList" class="custom-words-list" aria-live="polite"></div>
       <div class="word-import-actions">
+        <button type="button" onclick="copyCustomWordsList()">복사하기</button>
         <button type="button" class="small-btn" onclick="closeCustomWordsModal()">닫기</button>
       </div>
     </div>

@@ -275,6 +275,9 @@ document.addEventListener("DOMContentLoaded", () => {
     dateClick(info) {
       openDateActionModal(formatDateKey(info.date));
     },
+    datesSet() {
+      refreshAttendanceStyles();
+    },
     dayCellDidMount(info) {
       info.el.title = "클릭해서 일정 추가";
     },

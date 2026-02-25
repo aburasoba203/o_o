@@ -19,7 +19,7 @@ bless
 bottom
 바닥
 close
-닫다; 가까운
+닫다, 가까운
 collect
 모으다, 수집하다
 college
@@ -103,7 +103,7 @@ depend
 enemy
 적
 fine
-좋은; 벌금
+좋은, 벌금
 follow
 ~을 뒤따르다
 guest
@@ -119,7 +119,7 @@ invent
 junior
 부하, (대학) 3학년
 lock
-잠그다; 자물쇠
+잠그다, 자물쇠
 luck
 운, 행운
 metal
@@ -129,9 +129,9 @@ method
 observe
 관찰하다, 준수하다
 offer
-제안하다; 제의
+제안하다, 제의
 relative
-친척; 비교적인
+친척, 비교적인
 sample
 견본, 샘플
 senior
@@ -151,7 +151,7 @@ survive
 tower
 탑, 타워
 trust
-신뢰; 신뢰하다
+신뢰, 신뢰하다
 type
 유형, 종류
 usually
@@ -167,7 +167,7 @@ branch
 burden
 짐
 cause
-원인; ~을 일으키다
+원인, ~을 일으키다
 chase
 뒤쫓다, 추적하다
 comfortable
@@ -201,7 +201,7 @@ government
 instead
 대신에
 judge
-판사; 판단하다
+판사, 판단하다
 list
 목록
 machine
@@ -251,7 +251,7 @@ consider
 contrary
 반대되는
 decrease
-감소하다; 감소
+감소하다, 감소
 election
 선거
 export
@@ -259,7 +259,7 @@ export
 fair
 공정한
 firm
-단단한; 회사
+단단한, 회사
 forest
 숲
 guide
@@ -271,7 +271,7 @@ honor
 hunter
 사냥꾼
 increase
-증가하다; 증가
+증가하다, 증가
 instrument
 기구
 international
@@ -303,7 +303,7 @@ serious
 spirit
 정신
 supply
-공급; 공급하다
+공급, 공급하다
 surface
 표면
 tax
@@ -319,7 +319,7 @@ universe
 wrap
 포장하다
 ban
-금(지)하다; 금지
+금(지)하다, 금지
 birth
 탄생, 출생
 business
@@ -327,7 +327,7 @@ business
 century
 세기, 100년
 charge
-요금; 고발하다
+요금, 고발하다
 degree
 정도, 학위
 doubt
@@ -369,15 +369,15 @@ plenty
 pray
 기도하다
 press
-누르다; 언론
+누르다, 언론
 principal
-주요한; 교장
+주요한, 교장
 prison
 감옥
 responsibility
 책임(감)
 review
-비평; 재검토하다
+비평, 재검토하다
 rub
 문지르다
 section
@@ -431,7 +431,7 @@ fault
 feather
 깃털
 force
-힘, 폭력; 강요하다
+힘, 폭력, 강요하다
 grain
 곡물
 hardly
@@ -471,7 +471,7 @@ scholar
 service
 봉사, 서비스
 struggle
-투쟁하다; 투쟁
+투쟁하다, 투쟁
 thumb
 엄지손가락
 tiny
@@ -523,7 +523,7 @@ modern
 mud
 진흙
 pardon
-용서; 용서하다
+용서, 용서하다
 pollution
 오염, 공해
 private
@@ -605,7 +605,7 @@ normal
 opinion
 의견
 promise
-약속; 약속하다
+약속, 약속하다
 raise
 올리다, 높이다
 replace
@@ -619,13 +619,13 @@ series
 settle
 해결하다
 sign
-신호; 서명하다
+신호, 서명하다
 silly
 어리석은
 space
 공간, 우주
 spot
-장소; (딱) 발견하다
+장소, (딱) 발견하다
 subject
 주제, 과목
 terrible
@@ -667,7 +667,7 @@ elementary
 entire
 전체의
 exchange
-교환; 바꾸다
+교환, 바꾸다
 fact
 사실
 finally
@@ -691,7 +691,7 @@ pretend
 price
 가격, 대가
 public
-공공의; 일반 사람들
+공공의, 일반 사람들
 religious
 종교의
 republic
@@ -705,7 +705,7 @@ social
 steady
 꾸준한, 일정한
 stress
-스트레스; 강조하다
+스트레스, 강조하다
 temperature
 온도
 tool
@@ -1083,7 +1083,7 @@ lake
 life
 생명
 light
-빛; 가벼운
+빛, 가벼운
 marble
 대리석
 Mars
@@ -1843,7 +1843,7 @@ balloon
 bar
 막대기
 bear
-낳다; 곰
+낳다, 곰
 block
 블록
 bubble
@@ -2301,7 +2301,7 @@ rise
 sell
 팔다
 separate
-각각의; 분리하다
+각각의, 분리하다
 sleep
 자다
 slow
@@ -2347,7 +2347,7 @@ dirty
 dry
 마른
 early
-이른; 일찍
+이른, 일찍
 easy
 쉬운
 expensive
@@ -2357,7 +2357,7 @@ forward
 high
 높은
 late
-늦은; 늦게
+늦은, 늦게
 long
 긴, 길게
 loose

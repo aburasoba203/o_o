@@ -17,10 +17,12 @@
     </div>
   </nav>
 
-  <div class="container result-page">
-    <h1>오답노트</h1>
-
-    <div class="record-box">
+  <div class="container">
+    <div class="word-import-modal custom-words-modal result-note-modal" role="region" aria-label="오답노트">
+      <h2>오답노트</h2>
+      <div class="word-import-actions result-note-actions">
+        <button type="button" onclick="copyWrongWords()">복사하기</button>
+      </div>
       <p id="wrongSummary">0개</p>
       <div id="wrongList" class="custom-words-list" aria-live="polite"></div>
     </div>
@@ -29,6 +31,7 @@
   <script>
     const CUSTOM_WORDS_KEY = "customWords";
     const CUSTOM_WORDS_SESSION_KEY = "customWordsSessionBackup";
+    let wrongNoteItems = [];
 
     function parseJsonArray(raw) {
       try {
@@ -75,7 +78,7 @@
       if (items.length === 0) {
         const empty = document.createElement("p");
         empty.className = "custom-words-empty";
-        empty.innerText = "오답 기록이 없어요.";
+        empty.innerText = "오답 기록이 없습니두.😎";
         listEl.appendChild(empty);
         return;
       }
@@ -100,6 +103,53 @@
       });
     }
 
+    function buildWordExportText(items) {
+      return (items || [])
+        .map(item => {
+          const word = String(item?.word || "").trim();
+          const meanings = Array.isArray(item?.meanings)
+            ? item.meanings.map(v => String(v).trim()).filter(Boolean)
+            : [];
+          if (!word) return "";
+          return `${word}\n${(meanings.length ? meanings : ["뜻 정보 없음"]).join(", ")}`;
+        })
+        .filter(Boolean)
+        .join("\n");
+    }
+
+    async function copyText(text, successMessage) {
+      if (!text || !String(text).trim()) {
+        alert("복사할 내용이 없어요.");
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(text);
+        alert(successMessage);
+      } catch (error) {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const copied = document.execCommand("copy");
+        document.body.removeChild(textarea);
+        if (copied) {
+          alert(successMessage);
+        } else {
+          alert("복사 권한이 막혀 있습니두😿 직접 복사해주세잉.ㅎ");
+        }
+      }
+    }
+
+    async function copyWrongWords() {
+      await copyText(buildWordExportText(wrongNoteItems), "오답노트 복사 완료!");
+    }
+
+    window.copyWrongWords = copyWrongWords;
+
     (async () => {
       const wrongWords = parseJsonArray(localStorage.getItem("wrongWords"));
       const baseWords = await loadBaseWords();
@@ -110,13 +160,13 @@
       buildWordMap(sessionCustomWords).forEach((value, key) => combinedMap.set(key, value));
       buildWordMap(localCustomWords).forEach((value, key) => combinedMap.set(key, value));
 
-      const items = wrongWords.map(word => {
+      wrongNoteItems = wrongWords.map(word => {
         const normalizedWord = String(word).trim();
         const found = combinedMap.get(normalizedWord);
         return found || { word: normalizedWord, meanings: [] };
       });
 
-      renderWrongWords(items);
+      renderWrongWords(wrongNoteItems);
     })();
   </script>
   <script src="help-modal.js"></script>
