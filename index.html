@@ -12,9 +12,10 @@
       <button class="shift-btn" onclick="location.href='calendar.html'">캘린더</button>
     </div>
     <div class="nav-tools">
-      <button id="studyTimerActionBtn" onclick="handleStudyTimerActionButtonClick()">순공 타이머 시작</button>
-      <button id="studyTimerDisplay" class="timer-chip" onclick="handleTimerDisplayClick()">순공 00:00:00</button>
-      <button onclick="endStudySession()">공부 종료</button>
+      <button id="studyTimerActionBtn" class="mobile-hide-on-phone" onclick="handleStudyTimerActionButtonClick()">순공 타이머 시작</button>
+      <button id="studyTimerDisplay" class="timer-chip mobile-hide-on-phone" onclick="handleTimerDisplayClick()">순공 00:00:00</button>
+      <button class="mobile-hide-on-phone" onclick="endStudySession()">공부 종료</button>
+      <button type="button" id="mobileTimerQuickBtn" class="mobile-timer-btn shift-btn" onclick="openTimerQuickMenu()">⏰타이머</button>
     </div>
   </nav>
 

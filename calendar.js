@@ -337,7 +337,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function getCalendarHeight() {
     const reservedHeight = 220; // nav + title + summary + helper text + margins
-    return Math.max(380, window.innerHeight - reservedHeight);
+    const viewportHeight = window.visualViewport
+      ? Math.floor(window.visualViewport.height)
+      : window.innerHeight;
+    return Math.max(380, viewportHeight - reservedHeight);
+  }
+
+  function syncCalendarHeight() {
+    if (!calendar) return;
+    calendar.setOption("height", getCalendarHeight());
   }
 
   function updateCalendarViewButtons() {
@@ -640,7 +648,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       info.el.title = "클릭해서 일정 추가";
     },
     windowResize() {
-      calendar.setOption("height", getCalendarHeight());
+      syncCalendarHeight();
     }
   });
 
@@ -657,5 +665,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderDecorItems();
   window.addEventListener("pointermove", handleDecorPointerMove);
   window.addEventListener("pointerup", handleDecorPointerUp);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", syncCalendarHeight);
+  }
+  window.addEventListener("orientationchange", syncCalendarHeight);
   openTodayAttendancePopupIfNeeded();
 });

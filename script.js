@@ -254,17 +254,31 @@ function getCurrentStudyElapsedMs() {
   return (studyTimerState.elapsedMs || 0) + (Date.now() - studyTimerState.startedAt);
 }
 
-function updateStudyTimerDisplay() {
-  const displayButton = document.getElementById("studyTimerDisplay");
-  if (!displayButton) return;
+function updateMobileTimerQuickButton() {
+  const mobileTimerBtn = document.getElementById("mobileTimerQuickBtn");
+  if (!mobileTimerBtn) return;
 
   const elapsedMs = getCurrentStudyElapsedMs();
-  displayButton.innerText = `순공 ${formatDuration(elapsedMs)}`;
-  displayButton.classList.toggle("running", !!studyTimerState.isRunning);
-  displayButton.title = studyTimerState.isRunning
-    ? "클릭하면 일시정지 여부를 물어봐요"
-    : "클릭하면 다시 시작할지 물어봐요";
+  if (studyTimerState.isRunning || elapsedMs > 0) {
+    mobileTimerBtn.innerText = `⏰ ${formatDuration(elapsedMs)}`;
+    return;
+  }
 
+  mobileTimerBtn.innerText = "⏰타이머";
+}
+
+function updateStudyTimerDisplay() {
+  const displayButton = document.getElementById("studyTimerDisplay");
+  const elapsedMs = getCurrentStudyElapsedMs();
+  if (displayButton) {
+    displayButton.innerText = `순공 ${formatDuration(elapsedMs)}`;
+    displayButton.classList.toggle("running", !!studyTimerState.isRunning);
+    displayButton.title = studyTimerState.isRunning
+      ? "클릭하면 일시정지 여부를 물어봐요"
+      : "클릭하면 다시 시작할지 물어봐요";
+  }
+
+  updateMobileTimerQuickButton();
   updateStudyTimerActionButton();
 }
 
@@ -355,6 +369,71 @@ function handleTimerDisplayClick() {
   }
 
   alert("먼저 '순공 타이머 시작' 버튼을 눌러주세듀😁");
+}
+
+function openTimerQuickMenu() {
+  ensureStudyTimerDate();
+
+  const existing = document.getElementById("timerQuickMenuOverlay");
+  if (existing) existing.remove();
+
+  const elapsedMs = getCurrentStudyElapsedMs();
+  const actionLabel = studyTimerState.isRunning
+    ? "일시정지"
+    : ((studyTimerState.elapsedMs || 0) > 0 ? "이어하기" : "시작");
+
+  const hasEndSession = typeof endStudySession === "function";
+
+  const overlay = document.createElement("div");
+  overlay.id = "timerQuickMenuOverlay";
+  overlay.className = "calendar-modal-overlay";
+  overlay.innerHTML = `
+    <div class="calendar-modal" role="dialog" aria-modal="true" aria-label="타이머 메뉴">
+      <p class="calendar-modal-title">⏰ 타이머 ${formatDuration(elapsedMs)}</p>
+      <div class="calendar-modal-actions">
+        <button type="button" data-action="toggle">${actionLabel}</button>
+        ${hasEndSession ? '<button type="button" data-action="end">공부 종료</button>' : ""}
+        <button type="button" data-action="close" class="small-btn">닫기</button>
+      </div>
+    </div>
+  `;
+
+  const closeMenu = () => overlay.remove();
+
+  overlay.addEventListener("click", event => {
+    if (event.target === overlay) {
+      closeMenu();
+      return;
+    }
+
+    const button = event.target.closest("button[data-action]");
+    if (!button) return;
+
+    const action = button.dataset.action;
+    if (action === "close") {
+      closeMenu();
+      return;
+    }
+
+    if (action === "toggle") {
+      handleStudyTimerActionButtonClick();
+      closeMenu();
+      return;
+    }
+
+    if (action === "status") {
+      closeMenu();
+      handleTimerDisplayClick();
+      return;
+    }
+
+    if (action === "end" && hasEndSession) {
+      closeMenu();
+      endStudySession();
+    }
+  });
+
+  document.body.appendChild(overlay);
 }
 
 function endStudySession() {
