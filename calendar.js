@@ -445,8 +445,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     return Math.max(380, viewportHeight - reservedHeight);
   }
 
+  function getCalendarTitleFormat() {
+    if (isPortraitMobile()) {
+      return { year: "numeric", month: "short" };
+    }
+    return { year: "numeric", month: "long" };
+  }
+
+  function syncCalendarTitleFormat() {
+    if (!calendar) return;
+    calendar.setOption("titleFormat", getCalendarTitleFormat());
+  }
+
   function syncCalendarHeight() {
     if (!calendar) return;
+    syncCalendarTitleFormat();
     calendar.setOption("height", getCalendarHeight());
     decorItems.forEach(clampDecorItem);
     renderDecorItems();
@@ -972,6 +985,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   updateDdaySummary();
   renderDecorPalette();
   calendar.render();
+  syncCalendarTitleFormat();
   applyCalendarViewMode(calendarViewMode);
   updateCalendarViewButtons();
   loadDecorItemsForCurrentMonth();

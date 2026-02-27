@@ -955,6 +955,10 @@ button:hover {
   justify-content: flex-start;
 }
 
+#calendar .fc-toolbar-title {
+  white-space: nowrap;
+}
+
 #calendar .fc-daygrid-day-number {
   text-align: left;
   padding-left: 2px;
