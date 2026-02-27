@@ -147,19 +147,29 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     Object.keys(schedules).forEach(date => {
       events.push({
+        id: `schedule:${date}`,
         title: `공부: ${schedules[date]}`,
         start: date,
         backgroundColor: "#4f7cff",
-        borderColor: "#4f7cff"
+        borderColor: "#4f7cff",
+        extendedProps: {
+          recordType: "schedule",
+          dateKey: date
+        }
       });
     });
 
     Object.keys(exams).forEach(date => {
       events.push({
+        id: `exam:${date}`,
         title: `시험: ${exams[date]}`,
         start: date,
         backgroundColor: "#ff5a5f",
-        borderColor: "#ff5a5f"
+        borderColor: "#ff5a5f",
+        extendedProps: {
+          recordType: "exam",
+          dateKey: date
+        }
       });
     });
 
@@ -171,6 +181,31 @@ document.addEventListener("DOMContentLoaded", async () => {
         borderColor: "#8c7cf0"
       });
     });
+
+    try {
+      const todoItems = JSON.parse(localStorage.getItem("todoItems") || "[]");
+      if (Array.isArray(todoItems)) {
+        todoItems
+          .filter(item => item && !item.done && isValidDateKey(item.dueDate) && String(item.text || "").trim())
+          .forEach(item => {
+            events.push({
+              id: `todo:${item.id || `${item.dueDate}-${String(item.text || "").trim()}`}`,
+              title: `TO-DO: ${String(item.text).trim()}`,
+              start: item.dueDate,
+              backgroundColor: "#ffe08a",
+              borderColor: "#f2b705",
+              textColor: "#503b00",
+              extendedProps: {
+                recordType: "todo",
+                todoId: String(item.id || ""),
+                dateKey: item.dueDate
+              }
+            });
+          });
+      }
+    } catch (_) {
+      // ignore malformed todo storage
+    }
 
     return events;
   }
@@ -277,11 +312,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
         localStorage.setItem("todoItems", JSON.stringify(fallback));
       }
-    } else if (action === "delete") {
-      delete schedules[dateStr];
-      delete exams[dateStr];
-      delete attendance[dateStr];
-      delete studyTime[dateStr];
     } else {
       return;
     }
@@ -289,6 +319,48 @@ document.addEventListener("DOMContentLoaded", async () => {
     persistAll();
     updateDdaySummary();
     rerenderEvents();
+  }
+
+  function deleteCalendarRecordByEvent(event) {
+    const recordType = event?.extendedProps?.recordType;
+    const dateKey = String(event?.extendedProps?.dateKey || event?.startStr || "");
+    if (recordType === "schedule" && dateKey) {
+      if (!confirm(`공부 일정을 삭제할까요?\n${dateKey}`)) return true;
+      delete schedules[dateKey];
+      persistAll();
+      rerenderEvents();
+      updateDdaySummary();
+      return true;
+    }
+
+    if (recordType === "exam" && dateKey) {
+      if (!confirm(`시험 일정을 삭제할까요?\n${dateKey}`)) return true;
+      delete exams[dateKey];
+      persistAll();
+      rerenderEvents();
+      updateDdaySummary();
+      return true;
+    }
+
+    if (recordType === "todo") {
+      const todoId = String(event?.extendedProps?.todoId || "");
+      if (!todoId) return true;
+      if (!confirm("TO-DO를 삭제할까요?")) return true;
+      try {
+        const items = JSON.parse(localStorage.getItem("todoItems") || "[]");
+        const nextItems = Array.isArray(items)
+          ? items.filter(item => String(item?.id || "") !== todoId)
+          : [];
+        localStorage.setItem("todoItems", JSON.stringify(nextItems));
+      } catch (_) {
+        localStorage.setItem("todoItems", "[]");
+      }
+      window.dispatchEvent(new Event("todo:changed"));
+      rerenderEvents();
+      return true;
+    }
+
+    return false;
   }
 
   function openDateActionModal(dateStr) {
@@ -301,7 +373,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           <button type="button" data-action="study-range">공부 일정 추가</button>
           <button type="button" data-action="exam">시험 일정 추가</button>
           <button type="button" data-action="todo">TO-DO 추가</button>
-          <button type="button" data-action="delete" class="danger">일정/출석/순공 삭제</button>
           <button type="button" data-action="close" class="small-btn">닫기</button>
         </div>
       </div>
@@ -873,6 +944,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (isDecorEditMode()) return;
       openDateActionModal(formatDateKey(info.date));
     },
+    eventClick(info) {
+      if (isDecorEditMode()) return;
+      const handled = deleteCalendarRecordByEvent(info.event);
+      if (handled) {
+        info.jsEvent?.preventDefault?.();
+      }
+    },
     datesSet() {
       calendarViewAnchors[calendarViewMode] = formatDateKey(calendar.getDate());
       saveCalendarViewAnchors();
@@ -906,6 +984,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     const button = event.target.closest("button[data-mobile-purpose]");
     if (!button) return;
     setMobilePurposeTab(button.dataset.mobilePurpose || "calendar");
+  });
+
+  window.addEventListener("todo:changed", rerenderEvents);
+  window.addEventListener("storage", event => {
+    if (event.key === "todoItems") {
+      rerenderEvents();
+    }
   });
 
   window.addEventListener("pointermove", handleDecorPointerMove);

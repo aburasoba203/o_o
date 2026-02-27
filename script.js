@@ -265,7 +265,7 @@ function updateMobileTimerQuickButton() {
     return;
   }
 
-  mobileTimerBtn.innerText = "⏰타이머";
+  mobileTimerBtn.innerText = "⏰순공 타이머";
 }
 
 function updateStudyTimerDisplay() {

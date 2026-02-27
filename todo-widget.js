@@ -37,7 +37,7 @@
   }
 
   function getPendingCount() {
-    return todoItems.filter(item => !item.done).length;
+    return getVisibleTodoItems().filter(item => !item.done).length;
   }
 
   function isVisible(el) {
@@ -105,6 +105,33 @@
     });
   }
 
+  function getTodayKey() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  function isDueTodayOrPast(dueDate) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dueDate || ""))) return false;
+    return String(dueDate) <= getTodayKey();
+  }
+
+  function isPastDue(dueDate) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dueDate || ""))) return false;
+    return String(dueDate) < getTodayKey();
+  }
+
+  function getVisibleTodoItems() {
+    return todoItems.filter(item => !isPastDue(item?.dueDate));
+  }
+
+  function formatDueDateMMDD(dueDate) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dueDate || ""))) return "--/--";
+    return String(dueDate).slice(5).replace("-", "/");
+  }
+
   function closeTodoOverlay() {
     document.getElementById("todoWidgetOverlay")?.remove();
     updateFabVisibility();
@@ -113,24 +140,27 @@
   function renderTodoList(listEl) {
     if (!listEl) return;
     listEl.innerHTML = "";
-    const items = sortItems(todoItems);
+    const items = sortItems(getVisibleTodoItems());
+    const MIN_NOTE_LINES = 8;
 
     if (items.length === 0) {
       const empty = document.createElement("p");
       empty.className = "todo-empty";
       empty.textContent = "TO-DO가 없습니다.";
       listEl.appendChild(empty);
-      return;
     }
 
     items.forEach(item => {
       const row = document.createElement("div");
-      row.className = `todo-item${item.done ? " done" : ""}`;
+      const dueSoonOrLate = !item.done && isDueTodayOrPast(item.dueDate);
+      row.className = `todo-item${item.done ? " done" : ""}${dueSoonOrLate ? " is-due-alert" : ""}`;
 
       const left = document.createElement("button");
       left.type = "button";
       left.className = "todo-toggle";
-      left.textContent = item.done ? "완료" : "진행";
+      left.classList.toggle("is-done", item.done);
+      left.textContent = item.done ? "✓" : "";
+      left.setAttribute("aria-label", item.done ? "완료로 표시됨" : "진행 중");
       left.addEventListener("click", () => {
         todoItems = todoItems.map(v => (v.id === item.id ? { ...v, done: !v.done } : v));
         saveItems();
@@ -140,15 +170,24 @@
 
       const textWrap = document.createElement("div");
       textWrap.className = "todo-item-text";
+      const displayTitle = dueSoonOrLate ? `‼️${item.text}‼️` : item.text;
       textWrap.innerHTML = `
-        <div class="todo-item-title">${item.text}</div>
-        <div class="todo-item-meta">${item.dueDate ? `기한 ${item.dueDate}` : "기한 없음"}</div>
+        <div class="todo-item-title">${displayTitle}</div>
       `;
+
+      const dueEl = document.createElement("div");
+      dueEl.className = `todo-item-due${dueSoonOrLate ? " due-alert" : ""}`;
+      dueEl.textContent = formatDueDateMMDD(item.dueDate);
 
       const del = document.createElement("button");
       del.type = "button";
-      del.className = "small-btn";
-      del.textContent = "삭제";
+      del.className = "todo-delete-btn";
+      del.innerHTML = `
+        <svg viewBox="0 0 24 24" class="todo-trash-icon" aria-hidden="true" focusable="false">
+          <path d="M9 3h6l1 2h4v2H4V5h4l1-2zm-2 6h10l-.8 10.5A2 2 0 0 1 14.21 21H9.79a2 2 0 0 1-1.99-1.5L7 9zm3 2v7h2v-7h-2zm4 0v7h2v-7h-2z"/>
+        </svg>
+      `;
+      del.setAttribute("aria-label", "삭제");
       del.addEventListener("click", () => {
         todoItems = todoItems.filter(v => v.id !== item.id);
         saveItems();
@@ -158,9 +197,18 @@
 
       row.appendChild(left);
       row.appendChild(textWrap);
+      row.appendChild(dueEl);
       row.appendChild(del);
       listEl.appendChild(row);
     });
+
+    const fillerCount = Math.max(0, MIN_NOTE_LINES - items.length);
+    for (let i = 0; i < fillerCount; i++) {
+      const filler = document.createElement("div");
+      filler.className = "todo-filler-line";
+      filler.setAttribute("aria-hidden", "true");
+      listEl.appendChild(filler);
+    }
   }
 
   function openTodoOverlay() {
@@ -171,11 +219,15 @@
     overlay.className = "calendar-modal-overlay";
     overlay.innerHTML = `
       <div class="calendar-modal todo-widget-modal" role="dialog" aria-modal="true" aria-label="TO-DO">
-        <p class="calendar-modal-title">TO-DO</p>
-        <div id="todoWidgetList" class="todo-list"></div>
-        <div class="calendar-modal-actions">
-          <button type="button" class="small-btn" id="todoWidgetCloseBtn">닫기</button>
+        <button type="button" class="todo-widget-close-btn" id="todoWidgetCloseBtn" aria-label="닫기">×</button>
+        <p class="calendar-modal-title todo-widget-title">To-Do List</p>
+        <div class="todo-list-head">
+          <span></span>
+          <span></span>
+          <span class="todo-list-head-date">due-date</span>
+          <span></span>
         </div>
+        <div id="todoWidgetList" class="todo-list"></div>
       </div>
     `;
 
