@@ -91,6 +91,12 @@ body:not(.calendar-page) .container {
 }
 
 @media (max-width: 980px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
   .index-nav {
     grid-template-columns: 1fr;
     justify-items: start;
@@ -256,7 +262,7 @@ body:not(.calendar-page) .container {
 
   input,
   #wordImportTextarea {
-    font-size: 14px;
+    font-size: 16px;
     padding: 10px;
     margin-bottom: 8px;
   }
@@ -336,16 +342,8 @@ body:not(.calendar-page) .container {
     padding: 6px 10px;
   }
 
-  .calendar-page .nav-tools {
-    display: none;
-  }
-
   .calendar-title-actions {
     gap: 6px;
-  }
-
-  #decorPaletteToggleBtn {
-    display: none;
   }
 
   .calendar-view-toggle .small-btn {

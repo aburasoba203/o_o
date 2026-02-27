@@ -713,14 +713,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function toggleDecorPalette(forceOpen) {
-    if (isPortraitMobile()) {
-      if (typeof forceOpen === "boolean") {
-        setMobilePurposeTab(forceOpen ? "decor" : "calendar");
-        return;
-      }
-      setMobilePurposeTab(currentMobilePurposeTab === "decor" ? "calendar" : "decor");
-      return;
-    }
     const overlay = document.getElementById("decorPaletteOverlay");
     if (!overlay) return;
     const shouldOpen = typeof forceOpen === "boolean" ? forceOpen : overlay.hidden;
