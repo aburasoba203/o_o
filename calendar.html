@@ -34,6 +34,12 @@
         <button type="button" id="decorPaletteToggleBtn" class="small-btn" onclick="toggleDecorPalette()">꾸미기</button>
       </div>
     </div>
+
+    <div id="mobilePurposeTabs" class="mobile-purpose-tabs" role="tablist" aria-label="모바일 화면 모드">
+      <button type="button" class="mobile-purpose-tab is-active" data-mobile-purpose="calendar" role="tab" aria-selected="true">캘린더</button>
+      <button type="button" class="mobile-purpose-tab" data-mobile-purpose="decor" role="tab" aria-selected="false">꾸미기</button>
+    </div>
+
     <div id="ddaySummary" class="dday-summary">시험 일정이 없습니다.</div>
     <p class="calendar-help">날짜를 클릭하면 공부/시험 일정을 추가할 수 있습니다.</p>
 
@@ -65,6 +71,7 @@
 
   <script src="help-modal.js"></script>
   <script src="patch-notice.js"></script>
+  <script src="todo-widget.js"></script>
   <script src="calendar.js"></script>
   <script src="timer-nav.js"></script>
 </body>

@@ -1,10 +1,13 @@
 (() => {
-  const PATCH_NOTICE_VERSION = "2026-02-27-01-1";
+  const PATCH_NOTICE_VERSION = "2026-02-27-01-3";
   const PATCH_NOTICE_STORAGE_KEY = "patchNotice:lastSeenVersion";
   const PATCH_NOTICE_TITLE = "패치 내용";
   const PATCH_NOTICE_ITEMS = [
     "모바일 UI 개선ㅎ",
-    "꾸미기 모드 편의성 개선"
+    "꾸미기 모드 편의성 개선",
+    "꾸미기 팝업 위치 조정",
+    "스티커 크기 단위 변경",
+    "TO-DO 기능 추가"
   ];
 
   function hasSeenCurrentNotice() {

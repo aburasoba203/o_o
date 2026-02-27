@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let studyTime = JSON.parse(localStorage.getItem("studyTime")) || {};
   const CALENDAR_VIEW_MODE_KEY = "calendarViewMode";
   const CALENDAR_VIEW_ANCHORS_KEY = "calendarViewAnchors";
+  const MOBILE_PURPOSE_TAB_KEY = "calendarMobilePurposeTab";
   const DECOR_ITEMS_KEY = "calendarDecorItemsByMonth";
   const DECOR_IMAGE_MANIFEST_URL = "mydog/manifest.json";
   const DECOR_IMAGE_MANIFEST_CACHE_KEY = "calendarDecorImageManifest";
@@ -21,6 +22,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let calendar = null;
   let calendarViewMode = localStorage.getItem(CALENDAR_VIEW_MODE_KEY) === "week" ? "week" : "month";
   let calendarViewAnchors = JSON.parse(localStorage.getItem(CALENDAR_VIEW_ANCHORS_KEY) || "null") || {};
+  let currentMobilePurposeTab = localStorage.getItem(MOBILE_PURPOSE_TAB_KEY) || "calendar";
 
   function toDateOnly(dateString) {
     return new Date(`${dateString}T00:00:00`);
@@ -42,6 +44,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   function getTodayDateOnly() {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+
+  function isPortraitMobile() {
+    return window.matchMedia("(max-width: 980px) and (orientation: portrait)").matches;
+  }
+
+  function normalizeMobilePurposeTab(tab) {
+    return tab === "decor" ? tab : "calendar";
   }
 
   function getCurrentCalendarMonthKey() {
@@ -250,6 +260,22 @@ document.addEventListener("DOMContentLoaded", async () => {
       const text = prompt("시험 이름을 입력하세요:");
       if (!text || !text.trim()) return;
       exams[dateStr] = text.trim();
+    } else if (action === "todo") {
+      const text = prompt("TO-DO 내용을 입력해 주세요.");
+      if (!text || !text.trim()) return;
+      if (typeof window.addTodoItem === "function") {
+        window.addTodoItem({ text: text.trim(), dueDate: dateStr });
+      } else {
+        const fallback = JSON.parse(localStorage.getItem("todoItems") || "[]");
+        fallback.unshift({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          text: text.trim(),
+          dueDate: dateStr,
+          done: false,
+          createdAt: Date.now()
+        });
+        localStorage.setItem("todoItems", JSON.stringify(fallback));
+      }
     } else if (action === "delete") {
       delete schedules[dateStr];
       delete exams[dateStr];
@@ -273,6 +299,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <div class="calendar-modal-actions">
           <button type="button" data-action="study-range">공부 일정 추가</button>
           <button type="button" data-action="exam">시험 일정 추가</button>
+          <button type="button" data-action="todo">TO-DO 추가</button>
           <button type="button" data-action="delete" class="danger">일정/출석/순공 삭제</button>
           <button type="button" data-action="close" class="small-btn">닫기</button>
         </div>
@@ -336,7 +363,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function getCalendarHeight() {
-    const reservedHeight = 220; // nav + title + summary + helper text + margins
+    let reservedHeight = 220; // nav + title + summary + helper text + margins
+    if (isPortraitMobile()) {
+      reservedHeight = 210;
+    }
     const viewportHeight = window.visualViewport
       ? Math.floor(window.visualViewport.height)
       : window.innerHeight;
@@ -346,6 +376,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   function syncCalendarHeight() {
     if (!calendar) return;
     calendar.setOption("height", getCalendarHeight());
+    decorItems.forEach(clampDecorItem);
+    renderDecorItems();
   }
 
   function updateCalendarViewButtons() {
@@ -389,15 +421,23 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function normalizeDecorItems(items) {
+    const { width: stageWidth, height: stageHeight } = getStageSize();
     return (Array.isArray(items) ? items : [])
       .map(item => ({
         id: String(item.id || `${Date.now()}-${Math.random()}`),
         src: String(item.src || ""),
-        x: Number.isFinite(item.x) ? item.x : 20,
-        y: Number.isFinite(item.y) ? item.y : 20,
-        size: Number.isFinite(item.size) ? item.size : 56,
+        xPct: Number.isFinite(item.xPct)
+          ? item.xPct
+          : pxToPercent(Number.isFinite(item.x) ? item.x : 20, stageWidth),
+        yPct: Number.isFinite(item.yPct)
+          ? item.yPct
+          : pxToPercent(Number.isFinite(item.y) ? item.y : 20, stageHeight),
+        sizePct: Number.isFinite(item.sizePct)
+          ? item.sizePct
+          : pxToPercent(Number.isFinite(item.size) ? item.size : 56, stageWidth),
         ratio: Number.isFinite(item.ratio) && item.ratio > 0 ? item.ratio : 1
       }))
+      .map(clampDecorItem)
       .filter(item => dogImages.length === 0 || dogImages.includes(item.src));
   }
 
@@ -445,16 +485,46 @@ document.addEventListener("DOMContentLoaded", async () => {
     return document.getElementById("calendarDecorLayer");
   }
 
-  function clampDecorItem(item) {
+  function getStageSize() {
     const stage = getCalendarStage();
-    if (!stage) return item;
+    return {
+      width: Math.max(1, stage?.clientWidth || 1),
+      height: Math.max(1, stage?.clientHeight || 1)
+    };
+  }
+
+  function percentToPx(percent, totalPx) {
+    return (percent / 100) * totalPx;
+  }
+
+  function pxToPercent(px, totalPx) {
+    return totalPx > 0 ? (px / totalPx) * 100 : 0;
+  }
+
+  function getDecorPixelBox(item) {
+    const { width: stageWidth, height: stageHeight } = getStageSize();
     const ratio = Number.isFinite(item.ratio) && item.ratio > 0 ? item.ratio : 1;
-    const width = ratio >= 1 ? item.size : item.size * ratio;
-    const height = ratio >= 1 ? item.size / ratio : item.size;
-    const maxX = Math.max(0, stage.clientWidth - width);
-    const maxY = Math.max(0, stage.clientHeight - height);
-    item.x = Math.min(Math.max(0, item.x), maxX);
-    item.y = Math.min(Math.max(0, item.y), maxY);
+    const baseSizePx = percentToPx(item.sizePct, stageWidth);
+    const width = ratio >= 1 ? baseSizePx : baseSizePx * ratio;
+    const height = ratio >= 1 ? baseSizePx / ratio : baseSizePx;
+    const left = percentToPx(item.xPct, stageWidth);
+    const top = percentToPx(item.yPct, stageHeight);
+    return { left, top, width, height };
+  }
+
+  function clampDecorItem(item) {
+    const { width: stageWidth, height: stageHeight } = getStageSize();
+    const ratio = Number.isFinite(item.ratio) && item.ratio > 0 ? item.ratio : 1;
+    const baseSizePx = percentToPx(item.sizePct, stageWidth);
+    const stickerWidth = ratio >= 1 ? baseSizePx : baseSizePx * ratio;
+    const stickerHeight = ratio >= 1 ? baseSizePx / ratio : baseSizePx;
+    const minSizePct = pxToPercent(28, stageWidth);
+    const maxSizePct = pxToPercent(120, stageWidth);
+    const maxXPct = pxToPercent(Math.max(0, stageWidth - stickerWidth), stageWidth);
+    const maxYPct = pxToPercent(Math.max(0, stageHeight - stickerHeight), stageHeight);
+    item.sizePct = Math.min(Math.max(item.sizePct, minSizePct), maxSizePct);
+    item.xPct = Math.min(Math.max(item.xPct, 0), maxXPct);
+    item.yPct = Math.min(Math.max(item.yPct, 0), maxYPct);
     return item;
   }
 
@@ -467,7 +537,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!statusEl) return;
     const selected = getSelectedDecorItem();
     statusEl.textContent = selected
-      ? `선택됨: ${Math.round(selected.size)}px`
+      ? `선택됨: ${selected.sizePct.toFixed(1)}% (${Math.round(percentToPx(selected.sizePct, getStageSize().width))}px)`
       : "선택한 스티커 없음";
   }
 
@@ -486,13 +556,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       sticker.alt = "";
       sticker.draggable = false;
       sticker.dataset.id = item.id;
-      const ratio = Number.isFinite(item.ratio) && item.ratio > 0 ? item.ratio : 1;
-      const width = ratio >= 1 ? item.size : item.size * ratio;
-      const height = ratio >= 1 ? item.size / ratio : item.size;
+      const { left, top, width, height } = getDecorPixelBox(item);
       sticker.style.width = `${width}px`;
       sticker.style.height = `${height}px`;
-      sticker.style.left = `${item.x}px`;
-      sticker.style.top = `${item.y}px`;
+      sticker.style.left = `${left}px`;
+      sticker.style.top = `${top}px`;
       sticker.addEventListener("pointerdown", startDecorDrag);
       layer.appendChild(sticker);
     });
@@ -501,15 +569,28 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function addDecorItem(src) {
     if (!isDecorEditMode()) return;
+    const stage = getCalendarStage();
+    const spreadX = ((decorItems.length % 5) - 2) * 16;
+    const spreadY = ((decorItems.length % 4) - 1.5) * 14;
+    const fallbackX = 12 + (decorItems.length % 6) * 14;
+    const fallbackY = 12 + (decorItems.length % 4) * 14;
+    const startX = stage
+      ? Math.max(12, Math.round(stage.clientWidth * 0.5 - 28 + spreadX))
+      : fallbackX;
+    const startY = stage
+      ? Math.max(140, Math.round(stage.clientHeight * 0.45 - 28 + spreadY))
+      : fallbackY;
+
     const ratio = Number.isFinite(decorImageRatios[src]) && decorImageRatios[src] > 0
       ? decorImageRatios[src]
       : 1;
+    const { width: stageWidth, height: stageHeight } = getStageSize();
     const item = clampDecorItem({
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       src,
-      x: 12 + (decorItems.length % 6) * 14,
-      y: 12 + (decorItems.length % 4) * 14,
-      size: 56,
+      xPct: pxToPercent(startX, stageWidth),
+      yPct: pxToPercent(startY, stageHeight),
+      sizePct: pxToPercent(56, stageWidth),
       ratio
     });
     decorItems.push(item);
@@ -573,6 +654,53 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  function setMobilePurposeTab(tab, options = {}) {
+    const nextTab = normalizeMobilePurposeTab(tab);
+    const tabsWrap = document.getElementById("mobilePurposeTabs");
+    const helpEl = document.querySelector(".calendar-help");
+    const stageEl = getCalendarStage();
+
+    currentMobilePurposeTab = nextTab;
+    if (!options.skipPersist) {
+      localStorage.setItem(MOBILE_PURPOSE_TAB_KEY, currentMobilePurposeTab);
+    }
+
+    if (!isPortraitMobile()) {
+      document.body.classList.remove("mobile-purpose-mode", "mobile-purpose-calendar", "mobile-purpose-decor");
+      if (tabsWrap) tabsWrap.hidden = true;
+      if (ddaySummaryEl) ddaySummaryEl.hidden = false;
+      if (helpEl) helpEl.hidden = false;
+      if (stageEl) stageEl.hidden = false;
+      setDecorPaletteOpen(false);
+      return;
+    }
+
+    document.body.classList.add("mobile-purpose-mode");
+    document.body.classList.remove("mobile-purpose-calendar", "mobile-purpose-decor");
+    document.body.classList.add(`mobile-purpose-${currentMobilePurposeTab}`);
+
+    if (tabsWrap) {
+      tabsWrap.hidden = false;
+      tabsWrap.querySelectorAll("[data-mobile-purpose]").forEach(btn => {
+        const isActive = btn.dataset.mobilePurpose === currentMobilePurposeTab;
+        btn.classList.toggle("is-active", isActive);
+        btn.setAttribute("aria-selected", isActive ? "true" : "false");
+      });
+    }
+
+    const isCalendar = currentMobilePurposeTab === "calendar";
+    const isDecor = currentMobilePurposeTab === "decor";
+    if (ddaySummaryEl) ddaySummaryEl.hidden = !isCalendar;
+    if (helpEl) helpEl.hidden = !isCalendar;
+    if (stageEl) stageEl.hidden = !isCalendar;
+    setDecorPaletteOpen(isDecor);
+    syncCalendarHeight();
+  }
+
+  function syncMobilePurposeLayout() {
+    setMobilePurposeTab(currentMobilePurposeTab, { skipPersist: true });
+  }
+
   function setDecorPaletteOpen(isOpen) {
     const overlay = document.getElementById("decorPaletteOverlay");
     const toggleBtn = document.getElementById("decorPaletteToggleBtn");
@@ -585,6 +713,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function toggleDecorPalette(forceOpen) {
+    if (isPortraitMobile()) {
+      if (typeof forceOpen === "boolean") {
+        setMobilePurposeTab(forceOpen ? "decor" : "calendar");
+        return;
+      }
+      setMobilePurposeTab(currentMobilePurposeTab === "decor" ? "calendar" : "decor");
+      return;
+    }
     const overlay = document.getElementById("decorPaletteOverlay");
     if (!overlay) return;
     const shouldOpen = typeof forceOpen === "boolean" ? forceOpen : overlay.hidden;
@@ -607,7 +743,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       alert("크기 조절할 스티커를 먼저 눌러주세요.");
       return;
     }
-    item.size = Math.min(120, Math.max(28, item.size + delta));
+    const { width: stageWidth } = getStageSize();
+    item.sizePct += pxToPercent(delta, stageWidth);
     clampDecorItem(item);
     saveDecorItems();
     renderDecorItems();
@@ -624,10 +761,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     selectedDecorItemId = itemId;
 
     const rect = stage.getBoundingClientRect();
+    const { left, top } = getDecorPixelBox(item);
     decorDragState = {
       id: itemId,
-      offsetX: event.clientX - rect.left - item.x,
-      offsetY: event.clientY - rect.top - item.y
+      offsetX: event.clientX - rect.left - left,
+      offsetY: event.clientY - rect.top - top
     };
     target.setPointerCapture?.(event.pointerId);
     event.preventDefault();
@@ -642,9 +780,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const item = decorItems.find(v => v.id === decorDragState.id);
     if (!item) return;
     const rect = stage.getBoundingClientRect();
+    const { width: stageWidth, height: stageHeight } = getStageSize();
 
-    item.x = event.clientX - rect.left - decorDragState.offsetX;
-    item.y = event.clientY - rect.top - decorDragState.offsetY;
+    item.xPct = pxToPercent(event.clientX - rect.left - decorDragState.offsetX, stageWidth);
+    item.yPct = pxToPercent(event.clientY - rect.top - decorDragState.offsetY, stageHeight);
     clampDecorItem(item);
     renderDecorItems();
   }
@@ -691,13 +830,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadDecorItemsForCurrentMonth();
   updateDdaySummary();
   renderDecorPalette();
-  setDecorPaletteOpen(false);
   calendar.render();
   applyCalendarViewMode(calendarViewMode);
   updateCalendarViewButtons();
   loadDecorItemsForCurrentMonth();
   refreshAttendanceStyles();
   renderDecorItems();
+  syncMobilePurposeLayout();
+
+  const mobilePurposeTabs = document.getElementById("mobilePurposeTabs");
+  mobilePurposeTabs?.addEventListener("click", event => {
+    const button = event.target.closest("button[data-mobile-purpose]");
+    if (!button) return;
+    setMobilePurposeTab(button.dataset.mobilePurpose || "calendar");
+  });
+
   window.addEventListener("pointermove", handleDecorPointerMove);
   window.addEventListener("pointerup", handleDecorPointerUp);
   window.addEventListener("keydown", event => {
@@ -709,5 +856,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.visualViewport.addEventListener("resize", syncCalendarHeight);
   }
   window.addEventListener("orientationchange", syncCalendarHeight);
+  window.addEventListener("orientationchange", syncMobilePurposeLayout);
+  window.addEventListener("resize", syncMobilePurposeLayout);
   openTodayAttendancePopupIfNeeded();
 });
