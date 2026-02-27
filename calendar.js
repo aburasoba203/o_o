@@ -368,7 +368,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const targetDate = calendarViewAnchors[calendarViewMode] || formatDateKey(getTodayDateOnly());
 
     if (calendarViewMode === "week") {
-      calendar.setOption("hiddenDays", [0, 6]);
+      calendar.setOption("hiddenDays", []);
       calendar.changeView("dayGridWeek", targetDate);
     } else {
       calendar.setOption("hiddenDays", []);
@@ -500,6 +500,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function addDecorItem(src) {
+    if (!isDecorEditMode()) return;
     const ratio = Number.isFinite(decorImageRatios[src]) && decorImageRatios[src] > 0
       ? decorImageRatios[src]
       : 1;
@@ -557,13 +558,41 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  function toggleDecorPalette() {
-    const palette = document.getElementById("decorPalette");
-    if (!palette) return;
-    palette.hidden = !palette.hidden;
+  function isDecorEditMode() {
+    const overlay = document.getElementById("decorPaletteOverlay");
+    return Boolean(overlay && !overlay.hidden);
+  }
+
+  function syncDecorEditModeState(isOpen) {
+    const stage = getCalendarStage();
+    if (stage) {
+      stage.classList.toggle("decor-edit-mode", isOpen);
+    }
+    if (!isOpen) {
+      decorDragState = null;
+    }
+  }
+
+  function setDecorPaletteOpen(isOpen) {
+    const overlay = document.getElementById("decorPaletteOverlay");
+    const toggleBtn = document.getElementById("decorPaletteToggleBtn");
+    if (!overlay) return;
+    overlay.hidden = !isOpen;
+    syncDecorEditModeState(isOpen);
+    if (toggleBtn) {
+      toggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    }
+  }
+
+  function toggleDecorPalette(forceOpen) {
+    const overlay = document.getElementById("decorPaletteOverlay");
+    if (!overlay) return;
+    const shouldOpen = typeof forceOpen === "boolean" ? forceOpen : overlay.hidden;
+    setDecorPaletteOpen(shouldOpen);
   }
 
   function clearDecorItems() {
+    if (!isDecorEditMode()) return;
     if (!confirm("꾸미기를 모두 지우시겠습니끼?")) return;
     decorItems = [];
     selectedDecorItemId = null;
@@ -572,6 +601,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function resizeSelectedDecorItem(delta) {
+    if (!isDecorEditMode()) return;
     const item = getSelectedDecorItem();
     if (!item) {
       alert("크기 조절할 스티커를 먼저 눌러주세요.");
@@ -584,6 +614,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function startDecorDrag(event) {
+    if (!isDecorEditMode()) return;
     const target = event.currentTarget;
     const itemId = target?.dataset?.id;
     const stage = getCalendarStage();
@@ -604,6 +635,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function handleDecorPointerMove(event) {
+    if (!isDecorEditMode()) return;
     if (!decorDragState) return;
     const stage = getCalendarStage();
     if (!stage) return;
@@ -618,6 +650,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function handleDecorPointerUp() {
+    if (!isDecorEditMode()) return;
     if (!decorDragState) return;
     decorDragState = null;
     saveDecorItems();
@@ -635,6 +668,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     selectable: true,
     events: buildEvents(),
     dateClick(info) {
+      if (isDecorEditMode()) return;
       openDateActionModal(formatDateKey(info.date));
     },
     datesSet() {
@@ -657,6 +691,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadDecorItemsForCurrentMonth();
   updateDdaySummary();
   renderDecorPalette();
+  setDecorPaletteOpen(false);
   calendar.render();
   applyCalendarViewMode(calendarViewMode);
   updateCalendarViewButtons();
@@ -665,6 +700,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderDecorItems();
   window.addEventListener("pointermove", handleDecorPointerMove);
   window.addEventListener("pointerup", handleDecorPointerUp);
+  window.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      setDecorPaletteOpen(false);
+    }
+  });
   if (window.visualViewport) {
     window.visualViewport.addEventListener("resize", syncCalendarHeight);
   }

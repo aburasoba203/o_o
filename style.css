@@ -1,3 +1,9 @@
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
@@ -694,14 +700,19 @@ button:hover {
 
 .calendar-decor-item {
   position: absolute;
-  pointer-events: auto;
-  cursor: grab;
+  pointer-events: none;
+  cursor: default;
   user-select: none;
   -webkit-user-drag: none;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.18));
 }
 
-.calendar-decor-item:active {
+.calendar-stage.decor-edit-mode .calendar-decor-item {
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.calendar-stage.decor-edit-mode .calendar-decor-item:active {
   cursor: grabbing;
 }
 
@@ -717,6 +728,30 @@ button:hover {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+}
+
+.decor-palette-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 72px 12px 12px;
+  background: transparent;
+  pointer-events: none;
+  z-index: 2500;
+}
+
+.decor-palette-overlay[hidden] {
+  display: none;
+}
+
+.decor-palette-popup {
+  width: min(960px, calc(100% - 24px));
+  max-height: min(58vh, 460px);
+  margin: 0;
+  overflow: auto;
+  pointer-events: auto;
 }
 
 .decor-palette-head {
@@ -788,6 +823,14 @@ button:hover {
 }
 
 @media (max-width: 980px) {
+  .decor-palette-overlay {
+    padding-top: 64px;
+  }
+
+  .decor-palette-popup {
+    max-height: 62vh;
+  }
+
   .decor-thumb-list {
     display: flex;
     flex-wrap: nowrap;

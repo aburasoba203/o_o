@@ -31,13 +31,14 @@
           <button type="button" id="calendarMonthViewBtn" class="small-btn" onclick="setCalendarViewMode('month')">먼슬리</button>
           <button type="button" id="calendarWeekViewBtn" class="small-btn" onclick="setCalendarViewMode('week')">위클리</button>
         </div>
-        <button type="button" class="small-btn" onclick="toggleDecorPalette()">꾸미기</button>
+        <button type="button" id="decorPaletteToggleBtn" class="small-btn" onclick="toggleDecorPalette()">꾸미기</button>
       </div>
     </div>
     <div id="ddaySummary" class="dday-summary">시험 일정이 없습니다.</div>
     <p class="calendar-help">날짜를 클릭하면 공부/시험 일정을 추가할 수 있습니다.</p>
 
-    <div id="decorPalette" class="decor-palette" hidden>
+    <div id="decorPaletteOverlay" class="decor-palette-overlay" hidden>
+      <div id="decorPalette" class="decor-palette decor-palette-popup" role="dialog" aria-modal="true" aria-label="꾸미기 패널">
       <div class="decor-palette-head">
         <span>꾸미기</span>
         <div class="decor-palette-actions">
@@ -53,6 +54,7 @@
         </div>
       </div>
       <div id="decorThumbList" class="decor-thumb-list" aria-label="꾸미기 이미지 목록"></div>
+      </div>
     </div>
 
     <div id="calendarStage" class="calendar-stage">
@@ -62,6 +64,7 @@
   </div>
 
   <script src="help-modal.js"></script>
+  <script src="patch-notice.js"></script>
   <script src="calendar.js"></script>
   <script src="timer-nav.js"></script>
 </body>
