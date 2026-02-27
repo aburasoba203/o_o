@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let decorItems = [];
   let currentDecorScopeKey = "";
   let decorDragState = null;
+  let decorPinchState = null;
   let selectedDecorItemId = null;
   let calendar = null;
   let calendarViewMode = localStorage.getItem(CALENDAR_VIEW_MODE_KEY) === "week" ? "week" : "month";
@@ -787,6 +788,76 @@ document.addEventListener("DOMContentLoaded", async () => {
     saveDecorItems();
   }
 
+  function getTouchDistance(touchA, touchB) {
+    const dx = touchA.clientX - touchB.clientX;
+    const dy = touchA.clientY - touchB.clientY;
+    return Math.hypot(dx, dy);
+  }
+
+  function getStickerIdFromTouch(touch) {
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    return el?.closest(".calendar-decor-item")?.dataset?.id || null;
+  }
+
+  function handleDecorTouchStart(event) {
+    if (!isDecorEditMode()) return;
+    if (event.touches.length < 2) return;
+
+    const idA = getStickerIdFromTouch(event.touches[0]);
+    const idB = getStickerIdFromTouch(event.touches[1]);
+    const candidateId = idA || idB || selectedDecorItemId;
+    if (!candidateId) return;
+    if (idA && idB && idA !== idB) return;
+
+    const item = decorItems.find(v => v.id === candidateId);
+    if (!item) return;
+
+    const distance = getTouchDistance(event.touches[0], event.touches[1]);
+    if (!Number.isFinite(distance) || distance <= 0) return;
+
+    selectedDecorItemId = item.id;
+    const { width: stageWidth } = getStageSize();
+    decorPinchState = {
+      id: item.id,
+      startDistance: distance,
+      startSizePct: item.sizePct,
+      startStageWidth: stageWidth
+    };
+    event.preventDefault();
+    renderDecorItems();
+  }
+
+  function handleDecorTouchMove(event) {
+    if (!isDecorEditMode()) return;
+    if (!decorPinchState) return;
+    if (event.touches.length < 2) return;
+
+    const item = decorItems.find(v => v.id === decorPinchState.id);
+    if (!item) {
+      decorPinchState = null;
+      return;
+    }
+
+    const distance = getTouchDistance(event.touches[0], event.touches[1]);
+    if (!Number.isFinite(distance) || distance <= 0) return;
+
+    const scale = distance / decorPinchState.startDistance;
+    const baseSizePx = percentToPx(decorPinchState.startSizePct, decorPinchState.startStageWidth);
+    const nextSizePx = baseSizePx * scale;
+    const { width: stageWidth } = getStageSize();
+    item.sizePct = pxToPercent(nextSizePx, stageWidth);
+    clampDecorItem(item);
+    renderDecorItems();
+    event.preventDefault();
+  }
+
+  function handleDecorTouchEnd(event) {
+    if (!decorPinchState) return;
+    if (event.touches.length >= 2) return;
+    decorPinchState = null;
+    saveDecorItems();
+  }
+
   window.toggleDecorPalette = toggleDecorPalette;
   window.clearDecorItems = clearDecorItems;
   window.resizeSelectedDecorItem = resizeSelectedDecorItem;
@@ -839,6 +910,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   window.addEventListener("pointermove", handleDecorPointerMove);
   window.addEventListener("pointerup", handleDecorPointerUp);
+  const calendarStage = getCalendarStage();
+  calendarStage?.addEventListener("touchstart", handleDecorTouchStart, { passive: false });
+  calendarStage?.addEventListener("touchmove", handleDecorTouchMove, { passive: false });
+  calendarStage?.addEventListener("touchend", handleDecorTouchEnd, { passive: false });
+  calendarStage?.addEventListener("touchcancel", handleDecorTouchEnd, { passive: false });
   window.addEventListener("keydown", event => {
     if (event.key === "Escape") {
       setDecorPaletteOpen(false);

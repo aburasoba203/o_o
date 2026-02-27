@@ -91,6 +91,14 @@ body:not(.calendar-page) .container {
 }
 
 @media (max-width: 980px) {
+  .decor-size-buttons {
+    display: none;
+  }
+
+  .decor-size-controls {
+    justify-content: center;
+  }
+
   input,
   textarea,
   select {
