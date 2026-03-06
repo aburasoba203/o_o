@@ -1,14 +1,14 @@
 (() => {
-  const PATCH_NOTICE_VERSION = "2026-02-27-01-3";
+  const PATCH_NOTICE_VERSION = "2026-03-06";
   const PATCH_NOTICE_STORAGE_KEY = "patchNotice:lastSeenVersion";
   const PATCH_NOTICE_TITLE = "패치 내용";
   const PATCH_NOTICE_ITEMS = [
-    "모바일 UI 개선ㅎ",
-    "꾸미기 모드 편의성 개선",
-    "꾸미기 팝업 위치 조정",
-    "스티커 크기 단위 변경",
-    "TO-DO 기능 추가",
-    "단어퀴즈 셔플 로직 개선"
+    "같은 날짜에 여러 공부/시험 일정 표시 가능",
+    "먼슬리/위클리 출석 로직 개선",
+    "날짜별 단어장 저장 기능 추가",
+    "뜻 맞추기 <-> 단어 맞추기 전환 기능 추가",
+    "단어장 UI/UX 개선",
+    "To-Do 버튼에서 To-Do 추가가능하도록 수정"
   ];
 
   function hasSeenCurrentNotice() {

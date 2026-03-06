@@ -137,6 +137,23 @@
     updateFabVisibility();
   }
 
+  function promptAndAddTodoItem() {
+    const text = prompt("TO-DO 내용을 입력해주세요.");
+    if (!text || !String(text).trim()) return false;
+
+    const today = getTodayKey();
+    const dueDateInput = prompt(`기한 날짜를 입력해주세요. (YYYY-MM-DD)\n비우면 오늘(${today})로 저장됩니다.`, today);
+    if (dueDateInput === null) return false;
+
+    const dueDate = String(dueDateInput || "").trim() || today;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
+      alert("날짜 형식이 올바르지 않습니다. 예: 2026-03-06");
+      return false;
+    }
+
+    return addTodoItem({ text: String(text).trim(), dueDate });
+  }
+
   function renderTodoList(listEl) {
     if (!listEl) return;
     listEl.innerHTML = "";
@@ -144,9 +161,19 @@
     const MIN_NOTE_LINES = 8;
 
     if (items.length === 0) {
-      const empty = document.createElement("p");
+      const empty = document.createElement("div");
       empty.className = "todo-empty";
-      empty.textContent = "TO-DO가 없습니다.";
+      empty.innerHTML = `
+        <p class="todo-empty-text">TO-DO가 없습니다.</p>
+        <button type="button" class="todo-empty-add-btn">+ TO-DO 추가하기</button>
+      `;
+      empty.querySelector(".todo-empty-add-btn")?.addEventListener("click", () => {
+        const added = promptAndAddTodoItem();
+        if (added) {
+          renderTodoList(listEl);
+          updateFabVisibility();
+        }
+      });
       listEl.appendChild(empty);
     }
 

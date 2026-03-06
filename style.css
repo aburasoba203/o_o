@@ -188,6 +188,10 @@ body:not(.calendar-page) .container {
     min-height: 42px;
   }
 
+  .date-range-grid {
+    grid-template-columns: 1fr;
+  }
+
   .calendar-modal-actions button,
   .welcome-popup-actions button,
   .help-modal-header .small-btn {
@@ -424,6 +428,69 @@ body:not(.calendar-page) .container {
   font-size: 16px;
 }
 
+.quiz-source-label {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #294b1f;
+}
+
+.quiz-direction-toggle {
+  position: relative;
+  display: inline-flex;
+  gap: 0;
+  padding: 4px;
+  margin-left: auto;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+}
+
+.quiz-direction-toggle::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  height: calc(100% - 8px);
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(39, 77, 31, 0.12);
+  transform: translateX(0);
+  transition: transform 0.22s ease;
+}
+
+.quiz-direction-toggle[data-direction="word"]::before {
+  transform: translateX(100%);
+}
+
+.quiz-direction-toggle .small-btn {
+  position: relative;
+  z-index: 1;
+  min-width: 96px;
+  border-radius: 999px;
+  background: transparent;
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.quiz-direction-toggle .small-btn:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.quiz-direction-toggle .small-btn.is-active {
+  color: #274d1f;
+  font-weight: 700;
+}
+
+.quiz-direction-toggle .small-btn:not(.is-active) {
+  color: rgba(39, 77, 31, 0.72);
+}
+
+.quiz-direction-toggle .small-btn:active {
+  transform: translateY(0);
+}
+
 .top-menu-wrap {
   position: relative;
 }
@@ -488,7 +555,7 @@ body:not(.calendar-page) .container {
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  min-width: 170px;
+  min-width: 210px;
   background: #fffdf4;
   border-radius: 10px;
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.2);
@@ -512,6 +579,44 @@ body:not(.calendar-page) .container {
 .top-menu-item:hover {
   background: rgba(117, 206, 57, 0.12);
   opacity: 1;
+}
+
+.top-menu-group {
+  display: grid;
+  gap: 4px;
+}
+
+.top-menu-parent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.top-menu-arrow {
+  font-weight: 700;
+  color: #6c744b;
+  transition: transform 0.18s ease;
+}
+
+.top-menu-parent[aria-expanded="true"] .top-menu-arrow {
+  transform: rotate(90deg);
+}
+
+.top-menu-submenu {
+  display: grid;
+  gap: 4px;
+  padding-left: 10px;
+  border-left: 2px solid rgba(117, 206, 57, 0.18);
+  margin-left: 8px;
+}
+
+.top-menu-submenu[hidden] {
+  display: none !important;
+}
+
+.top-menu-subitem {
+  font-size: 13px;
+  color: #374125;
 }
 
 .card {
@@ -972,6 +1077,11 @@ button:hover {
   background: rgba(76, 175, 80, 0.12);
 }
 
+#calendar .fc-bg-event.attendance-bg-event {
+  background: rgba(76, 175, 80, 0.22);
+  opacity: 1;
+}
+
 .welcome-popup-overlay {
   position: fixed;
   inset: 0;
@@ -1033,6 +1143,45 @@ button:hover {
   margin: 0 0 12px;
   font-weight: 700;
   text-align: center;
+}
+
+.calendar-modal-existing {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(121, 89, 255, 0.08);
+}
+
+.calendar-modal-subtitle {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.calendar-modal-entry-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.calendar-modal-entry-list li {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 8px;
+  align-items: start;
+  font-size: 13px;
+}
+
+.calendar-modal-entry-list li strong {
+  color: #6b55d8;
+}
+
+.calendar-modal-entry-list li span {
+  word-break: break-word;
 }
 
 .calendar-modal-actions {
@@ -1172,6 +1321,28 @@ button:hover {
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: #3c3c3c;
   text-align: center;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+.todo-empty-text {
+  margin: 0;
+}
+
+.todo-empty-add-btn {
+  min-height: 40px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: #eef7df;
+  color: #2a7a18;
+  border: 1px solid rgba(42, 122, 24, 0.2);
+  font-weight: 700;
+}
+
+.todo-empty-add-btn:hover {
+  background: #e3f1cd;
+  opacity: 1;
 }
 
 .todo-item {
@@ -1318,6 +1489,48 @@ button:hover {
   margin: 0 0 8px;
   font-size: 13px;
   color: #4e4e4e;
+}
+
+.date-range-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.date-range-grid label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2f3a18;
+}
+
+.saved-wordbook-preview {
+  min-height: 56px;
+  max-height: 180px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(117, 206, 57, 0.12);
+  color: #2b3219;
+  font-size: 13px;
+}
+
+.saved-wordbook-preview p {
+  margin: 0;
+}
+
+.saved-wordbook-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+}
+
+.saved-wordbook-list li {
+  line-height: 1.4;
 }
 
 #wordImportTextarea {

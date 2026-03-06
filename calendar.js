@@ -25,6 +25,34 @@ document.addEventListener("DOMContentLoaded", async () => {
   let calendarViewAnchors = JSON.parse(localStorage.getItem(CALENDAR_VIEW_ANCHORS_KEY) || "null") || {};
   let currentMobilePurposeTab = localStorage.getItem(MOBILE_PURPOSE_TAB_KEY) || "calendar";
 
+  function normalizeStoredEntryMap(map) {
+    if (!map || typeof map !== "object" || Array.isArray(map)) return {};
+    const normalized = {};
+    Object.entries(map).forEach(([dateKey, rawValue]) => {
+      const values = Array.isArray(rawValue)
+        ? rawValue
+        : (typeof rawValue === "string" ? [rawValue] : []);
+      const cleaned = values
+        .map(value => String(value || "").trim())
+        .filter(Boolean);
+      if (cleaned.length > 0) {
+        normalized[dateKey] = cleaned;
+      }
+    });
+    return normalized;
+  }
+
+  schedules = normalizeStoredEntryMap(schedules);
+  exams = normalizeStoredEntryMap(exams);
+  localStorage.setItem("schedule", JSON.stringify(schedules));
+  localStorage.setItem("exam", JSON.stringify(exams));
+
+  function ensureEntryList(map, dateKey) {
+    const current = Array.isArray(map[dateKey]) ? map[dateKey] : [];
+    map[dateKey] = current;
+    return current;
+  }
+
   function toDateOnly(dateString) {
     return new Date(`${dateString}T00:00:00`);
   }
@@ -145,31 +173,53 @@ document.addEventListener("DOMContentLoaded", async () => {
   function buildEvents() {
     const events = [];
 
-    Object.keys(schedules).forEach(date => {
+    Object.keys(attendance).forEach(date => {
+      if (!attendance[date]) return;
       events.push({
-        id: `schedule:${date}`,
-        title: `공부: ${schedules[date]}`,
+        id: `attendance:${date}`,
         start: date,
-        backgroundColor: "#4f7cff",
-        borderColor: "#4f7cff",
+        allDay: true,
+        display: "background",
+        backgroundColor: "rgba(76, 175, 80, 0.18)",
+        classNames: ["attendance-bg-event"],
         extendedProps: {
-          recordType: "schedule",
+          recordType: "attendance",
           dateKey: date
         }
       });
     });
 
+    Object.keys(schedules).forEach(date => {
+      ensureEntryList(schedules, date).forEach((text, index) => {
+        events.push({
+          id: `schedule:${date}:${index}`,
+          title: `공부: ${text}`,
+          start: date,
+          backgroundColor: "#4f7cff",
+          borderColor: "#4f7cff",
+          extendedProps: {
+            recordType: "schedule",
+            dateKey: date,
+            entryIndex: index
+          }
+        });
+      });
+    });
+
     Object.keys(exams).forEach(date => {
-      events.push({
-        id: `exam:${date}`,
-        title: `시험: ${exams[date]}`,
-        start: date,
-        backgroundColor: "#ff5a5f",
-        borderColor: "#ff5a5f",
-        extendedProps: {
-          recordType: "exam",
-          dateKey: date
-        }
+      ensureEntryList(exams, date).forEach((text, index) => {
+        events.push({
+          id: `exam:${date}:${index}`,
+          title: `시험: ${text}`,
+          start: date,
+          backgroundColor: "#ff5a5f",
+          borderColor: "#ff5a5f",
+          extendedProps: {
+            recordType: "exam",
+            dateKey: date,
+            entryIndex: index
+          }
+        });
       });
     });
 
@@ -223,12 +273,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  function getAttendanceDayCellClassNames(arg) {
+    const dateKey = formatDateKey(arg.date);
+    return attendance[dateKey] ? ["attended-day"] : [];
+  }
+
   function updateDdaySummary() {
     if (!ddaySummaryEl) return;
 
     const today = getTodayDateOnly();
     const upcomingExams = Object.entries(exams)
-      .map(([date, name]) => ({ date, name, dateObj: toDateOnly(date) }))
+      .flatMap(([date, names]) => ensureEntryList(exams, date)
+        .map(name => ({ date, name, dateObj: toDateOnly(date) })))
       .filter(item => !Number.isNaN(item.dateObj.getTime()) && item.dateObj >= today)
       .sort((a, b) => a.dateObj - b.dateObj);
 
@@ -258,6 +314,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const todayKey = formatDateKey(getTodayDateOnly());
     attendance[todayKey] = true;
     persistAll();
+    calendar?.render();
     refreshAttendanceStyles();
   }
 
@@ -271,7 +328,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (action === "study") {
       const text = prompt("공부 일정 내용을 입력하세요:");
       if (!text || !text.trim()) return;
-      schedules[dateStr] = text.trim();
+      ensureEntryList(schedules, dateStr).push(text.trim());
     } else if (action === "study-range") {
       const endDateInput = prompt(
         `종료 날짜를 입력하세요 (YYYY-MM-DD)\n시작 날짜: ${dateStr}`,
@@ -290,12 +347,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const rangeDates = enumerateDateKeys(dateStr, endDateStr);
       rangeDates.forEach(key => {
-        schedules[key] = text.trim();
+        ensureEntryList(schedules, key).push(text.trim());
       });
     } else if (action === "exam") {
       const text = prompt("시험 이름을 입력하세요:");
       if (!text || !text.trim()) return;
-      exams[dateStr] = text.trim();
+      ensureEntryList(exams, dateStr).push(text.trim());
     } else if (action === "todo") {
       const text = prompt("TO-DO 내용을 입력해 주세요.");
       if (!text || !text.trim()) return;
@@ -324,9 +381,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   function deleteCalendarRecordByEvent(event) {
     const recordType = event?.extendedProps?.recordType;
     const dateKey = String(event?.extendedProps?.dateKey || event?.startStr || "");
+    const entryIndex = Number(event?.extendedProps?.entryIndex);
     if (recordType === "schedule" && dateKey) {
       if (!confirm(`공부 일정을 삭제할까요?\n${dateKey}`)) return true;
-      delete schedules[dateKey];
+      const nextEntries = ensureEntryList(schedules, dateKey)
+        .filter((_, index) => index !== entryIndex);
+      if (nextEntries.length > 0) {
+        schedules[dateKey] = nextEntries;
+      } else {
+        delete schedules[dateKey];
+      }
       persistAll();
       rerenderEvents();
       updateDdaySummary();
@@ -335,7 +399,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (recordType === "exam" && dateKey) {
       if (!confirm(`시험 일정을 삭제할까요?\n${dateKey}`)) return true;
-      delete exams[dateKey];
+      const nextEntries = ensureEntryList(exams, dateKey)
+        .filter((_, index) => index !== entryIndex);
+      if (nextEntries.length > 0) {
+        exams[dateKey] = nextEntries;
+      } else {
+        delete exams[dateKey];
+      }
       persistAll();
       rerenderEvents();
       updateDdaySummary();
@@ -363,12 +433,56 @@ document.addEventListener("DOMContentLoaded", async () => {
     return false;
   }
 
+  function getDateEntriesForModal(dateStr) {
+    const scheduleEntries = ensureEntryList(schedules, dateStr).map((text, index) => ({
+      type: "study",
+      label: "공부",
+      text,
+      index
+    }));
+    const examEntries = ensureEntryList(exams, dateStr).map((text, index) => ({
+      type: "exam",
+      label: "시험",
+      text,
+      index
+    }));
+    const todoEntries = (() => {
+      try {
+        const items = JSON.parse(localStorage.getItem("todoItems") || "[]");
+        if (!Array.isArray(items)) return [];
+        return items
+          .filter(item => !item?.done && item?.dueDate === dateStr && String(item?.text || "").trim())
+          .map((item, index) => ({
+            type: "todo",
+            label: "TO-DO",
+            text: String(item.text).trim(),
+            index
+          }));
+      } catch (_) {
+        return [];
+      }
+    })();
+    return [...scheduleEntries, ...examEntries, ...todoEntries];
+  }
+
   function openDateActionModal(dateStr) {
+    const existingEntries = getDateEntriesForModal(dateStr);
+    const existingMarkup = existingEntries.length > 0
+      ? `
+        <div class="calendar-modal-existing">
+          <p class="calendar-modal-subtitle">현재 일정</p>
+          <ul class="calendar-modal-entry-list">
+            ${existingEntries.map(entry => `<li><strong>${entry.label}</strong><span>${entry.text}</span></li>`).join("")}
+          </ul>
+        </div>
+      `
+      : "";
     const overlay = document.createElement("div");
     overlay.className = "calendar-modal-overlay";
     overlay.innerHTML = `
       <div class="calendar-modal" role="dialog" aria-modal="true" aria-label="일정 관리">
         <p class="calendar-modal-title">${dateStr}</p>
+        ${existingMarkup}
         <div class="calendar-modal-actions">
           <button type="button" data-action="study-range">공부 일정 추가</button>
           <button type="button" data-action="exam">시험 일정 추가</button>
@@ -950,12 +1064,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: "dayGridMonth",
     height: getCalendarHeight(),
+    dayMaxEventRows: 3,
+    moreLinkClick: "popover",
     firstDay: 1,
     selectable: true,
     events: buildEvents(),
     dateClick(info) {
       if (isDecorEditMode()) return;
       openDateActionModal(formatDateKey(info.date));
+    },
+    dayCellClassNames(arg) {
+      return getAttendanceDayCellClassNames(arg);
     },
     eventClick(info) {
       if (isDecorEditMode()) return;
