@@ -1506,6 +1506,30 @@ button:hover {
   color: #2f3a18;
 }
 
+.save-wordbook-scope {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.save-wordbook-scope-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(117, 206, 57, 0.08);
+  font-size: 13px;
+  font-weight: 700;
+  color: #2f3a18;
+}
+
+.save-wordbook-scope-option input {
+  width: auto;
+  margin: 0;
+}
+
 .saved-wordbook-preview {
   min-height: 56px;
   max-height: 180px;
@@ -1581,6 +1605,13 @@ button:hover {
   border-bottom: 1px solid #efe9d3;
 }
 
+.custom-word-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .custom-word-item:last-child {
   border-bottom: none;
 }
@@ -1590,12 +1621,28 @@ button:hover {
   color: #1f2130;
 }
 
+.custom-word-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.custom-word-actions button {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
 .custom-word-meanings {
   margin-top: 4px;
   font-size: 13px;
   color: #545454;
   line-height: 1.45;
   word-break: break-word;
+}
+
+.danger-soft {
+  background: #f7d9d9;
+  color: #6b2222;
 }
 
 .custom-words-empty {

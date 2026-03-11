@@ -3,12 +3,8 @@
   const PATCH_NOTICE_STORAGE_KEY = "patchNotice:lastSeenVersion";
   const PATCH_NOTICE_TITLE = "패치 내용";
   const PATCH_NOTICE_ITEMS = [
-    "같은 날짜에 여러 공부/시험 일정 표시 가능",
-    "먼슬리/위클리 출석 로직 개선",
-    "날짜별 단어장 저장 기능 추가",
-    "뜻 맞추기 <-> 단어 맞추기 전환 기능 추가",
-    "단어장 UI/UX 개선",
-    "To-Do 버튼에서 To-Do 추가가능하도록 수정"
+    "단어 목록에서 단어 삭제/수정 기능 추가",
+    "단어장 저장 옵션 추가"
   ];
 
   function hasSeenCurrentNotice() {
