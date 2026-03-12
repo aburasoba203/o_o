@@ -682,8 +682,7 @@ function shuffleArray(array) {
 
 function normalizeMeaningText(text) {
   return String(text)
-    .replace(/\([^)]*\)/g, "")
-    .replace(/\[[^\]]*\]/g, "")
+    .replace(/\([^)]*\)|\[[^\]]*\]|\{[^}]*\}|（[^）]*）/g, "")
     .trim()
     .replace(/\s+/g, "")
     .toLowerCase();
@@ -693,8 +692,8 @@ function getMeaningAnswerVariants(text) {
   const source = String(text || "");
   let variants = new Set([source]);
 
-  // ()와 [] 내부 표기는 선택 입력으로 허용한다. 예: 견과(류) => 견과, 견과류
-  const optionalPatterns = [/\(([^()]*)\)/g, /\[([^\[\]]*)\]/g];
+  // 괄호 내부 표기는 선택 입력으로 허용한다. 예: 견과(류) => 견과, 견과류
+  const optionalPatterns = [/\(([^()]*)\)/, /\[([^\[\]]*)\]/, /\{([^{}]*)\}/, /（([^（）]*)）/];
 
   optionalPatterns.forEach(pattern => {
     let changed = true;
