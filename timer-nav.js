@@ -194,7 +194,7 @@ function openTimerQuickMenu() {
       <div class="calendar-modal-actions">
         <button type="button" data-action="toggle">${actionLabel}</button>
         ${hasEndSession ? '<button type="button" data-action="end">공부 종료</button>' : ""}
-        <button type="button" data-action="close" class="small-btn">닫기</button>
+        <button type="button" data-action="close" class="modal-close-btn" aria-label="닫기">×</button>
       </div>
     </div>
   `;
@@ -247,9 +247,7 @@ function endStudySession() {
   }
 
   const today = getTodayDateString();
-  const shouldEnd = confirm(
-    `오늘 학습 종료하시겠습니까?\n\n순공시간 ${formatDuration(elapsedMs)} 이(가) ${today}에 저장됩니다.`
-  );
+  const shouldEnd = confirm(`오늘 학습 종료하시겠습니까?\n\n순공시간 ${formatDuration(elapsedMs)} 이(가) ${today}에 저장됩니다.`);
   if (!shouldEnd) return;
 
   const studyTime = getTodayStudyTimeStore();
@@ -261,9 +259,7 @@ function endStudySession() {
   stopStudyTimerTick();
   updateStudyTimerDisplay();
 
-  alert(
-    `이번 순공 ${formatDuration(elapsedMs)} 저장 완료!\n오늘 누적 순공 ${formatDuration(todayTotalMs)} (캘린더 반영)`
-  );
+  alert(`이번 순공 ${formatDuration(elapsedMs)} 저장 완료!\n오늘 누적 순공 ${formatDuration(todayTotalMs)} (캘린더 반영)`);
 }
 
 document.addEventListener("DOMContentLoaded", initializeStudyTimer);

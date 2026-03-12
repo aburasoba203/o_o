@@ -26,7 +26,7 @@ async function openHelpModal() {
     <div class="help-modal" role="dialog" aria-modal="true" aria-label="도움말">
       <div class="help-modal-header">
         <h2>도움말 (README)</h2>
-        <button type="button" class="small-btn" id="helpModalCloseBtn">닫기</button>
+        <button type="button" class="modal-close-btn" id="helpModalCloseBtn" aria-label="닫기">×</button>
       </div>
       <pre id="helpModalContent" class="help-modal-content">불러오는 중...</pre>
     </div>

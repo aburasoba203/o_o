@@ -559,11 +559,11 @@ function openTimerQuickMenu() {
   overlay.className = "calendar-modal-overlay";
   overlay.innerHTML = `
     <div class="calendar-modal" role="dialog" aria-modal="true" aria-label="타이머 메뉴">
+      <button type="button" data-action="close" class="modal-close-btn" aria-label="닫기">×</button>
       <p class="calendar-modal-title">⏰ 타이머 ${formatDuration(elapsedMs)}</p>
       <div class="calendar-modal-actions">
         <button type="button" data-action="toggle">${actionLabel}</button>
         ${hasEndSession ? '<button type="button" data-action="end">공부 종료</button>' : ""}
-        <button type="button" data-action="close" class="small-btn">닫기</button>
       </div>
     </div>
   `;
@@ -653,10 +653,10 @@ function showWelcomePopup() {
   overlay.className = "welcome-popup-overlay";
   overlay.innerHTML = `
     <div class="welcome-popup" role="dialog" aria-modal="true" aria-label="출석 체크">
+      <button type="button" id="welcomeCloseBtn" class="modal-close-btn" aria-label="닫기">×</button>
       <p class="welcome-popup-message">반갑습니두! 오늘도 힘내볼끼끼❓</p>
       <div class="welcome-popup-actions">
         <button type="button" id="attendanceCheckBtn">출석체크</button>
-        <button type="button" id="welcomeCloseBtn" class="small-btn">닫기</button>
       </div>
     </div>
   `;

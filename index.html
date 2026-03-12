@@ -88,6 +88,7 @@
 
   <div id="wordImportModal" class="word-import-overlay" hidden>
     <div class="word-import-modal" role="dialog" aria-modal="true" aria-label="단어 추가">
+      <button type="button" class="modal-close-btn" aria-label="닫기" onclick="closeWordImportModal()">×</button>
       <h2>단어 추가하기</h2>
       <p>형식: 영단어 한 줄, 뜻 한 줄 (반복). 뜻 여러 개는 쉼표로 구분.</p>
       <textarea
@@ -97,25 +98,25 @@
       <div class="word-import-actions">
         <button type="button" onclick="submitWordImport()">추가</button>
         <button type="button" class="small-btn" onclick="loadTestWordsFromRaw()">테스트용 단어</button>
-        <button type="button" class="small-btn" onclick="closeWordImportModal()">닫기</button>
       </div>
     </div>
   </div>
 
   <div id="customWordsModal" class="word-import-overlay" hidden>
     <div class="word-import-modal custom-words-modal" role="dialog" aria-modal="true" aria-label="단어 목록">
+      <button type="button" class="modal-close-btn" aria-label="닫기" onclick="closeCustomWordsModal()">×</button>
       <h2 id="customWordsModalTitle">단어 목록</h2>
       <p id="customWordsSummary">0개</p>
       <div id="customWordsList" class="custom-words-list" aria-live="polite"></div>
       <div class="word-import-actions">
         <button type="button" onclick="copyCustomWordsList()">복사하기</button>
-        <button type="button" class="small-btn" onclick="closeCustomWordsModal()">닫기</button>
       </div>
     </div>
   </div>
 
   <div id="saveWordBookModal" class="word-import-overlay" hidden>
     <div class="word-import-modal" role="dialog" aria-modal="true" aria-label="단어장 저장">
+      <button type="button" class="modal-close-btn" aria-label="닫기" onclick="closeSaveWordBookModal()">×</button>
       <h2>단어장 저장</h2>
       <p id="saveWordBookDateText">오늘 추가한 단어를 저장합니다.</p>
       <div class="save-wordbook-scope" role="radiogroup" aria-label="저장 범위 선택">
@@ -132,13 +133,13 @@
       <div id="saveWordBookPreview" class="saved-wordbook-preview" aria-live="polite"></div>
       <div class="word-import-actions">
         <button type="button" onclick="submitSaveWordBook()">저장</button>
-        <button type="button" class="small-btn" onclick="closeSaveWordBookModal()">닫기</button>
       </div>
     </div>
   </div>
 
   <div id="wordBookShuffleModal" class="word-import-overlay" hidden>
     <div class="word-import-modal" role="dialog" aria-modal="true" aria-label="단어장 불러오기">
+      <button type="button" class="modal-close-btn" aria-label="닫기" onclick="closeWordBookShuffleModal()">×</button>
       <h2 id="wordBookModalTitle">단어장 불러오기</h2>
       <p id="wordBookModalDescription">저장된 단어장 중 선택한 기간에 해당하는 단어만 셔플합니다.</p>
       <div class="date-range-grid">
@@ -154,7 +155,6 @@
       <div id="wordBookShufflePreview" class="saved-wordbook-preview" aria-live="polite"></div>
       <div class="word-import-actions">
         <button type="button" id="wordBookModalActionBtn" onclick="applyWordBookShuffle()">셔플 시작</button>
-        <button type="button" class="small-btn" onclick="closeWordBookShuffleModal()">닫기</button>
       </div>
     </div>
   </div>

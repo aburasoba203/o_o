@@ -289,7 +289,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       .sort((a, b) => a.dateObj - b.dateObj);
 
     if (upcomingExams.length === 0) {
-      ddaySummaryEl.innerText = "시험 일정이 없습니디리링.";
+      ddaySummaryEl.innerText = "시험 일정이 없습니다.";
       return;
     }
 
@@ -906,6 +906,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!overlay) return;
     overlay.hidden = !isOpen;
     syncDecorEditModeState(isOpen);
+    if (!isOpen && selectedDecorItemId) {
+      selectedDecorItemId = null;
+      renderDecorItems();
+    }
     if (toggleBtn) {
       toggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
     }
@@ -1103,6 +1107,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadDecorItemsForCurrentMonth();
   updateDdaySummary();
   renderDecorPalette();
+  document.getElementById("decorPaletteOverlay")?.addEventListener("click", event => {
+    if (event.target === document.getElementById("decorPaletteOverlay")) {
+      setDecorPaletteOpen(false);
+    }
+  });
   calendar.render();
   syncCalendarTitleFormat();
   applyCalendarViewMode(calendarViewMode);

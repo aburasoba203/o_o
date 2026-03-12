@@ -45,21 +45,21 @@
 
     <div id="decorPaletteOverlay" class="decor-palette-overlay" hidden>
       <div id="decorPalette" class="decor-palette decor-palette-popup" role="dialog" aria-modal="true" aria-label="꾸미기 패널">
-      <div class="decor-palette-head">
-        <span>꾸미기</span>
-        <div class="decor-palette-actions">
-          <button type="button" class="small-btn" onclick="clearDecorItems()">초기화</button>
-          <button type="button" class="small-btn" onclick="toggleDecorPalette()">닫기</button>
+        <div class="decor-palette-head">
+          <span>꾸미기</span>
+          <div class="decor-palette-actions">
+            <button type="button" class="small-btn" onclick="clearDecorItems()">초기화</button>
+            <button type="button" class="small-btn" onclick="toggleDecorPalette()">닫기</button>
+          </div>
         </div>
-      </div>
-      <div class="decor-size-controls" aria-label="sticker size controls">
-        <span id="decorSizeStatus" class="decor-size-status">선택한 스티커 없음</span>
-        <div class="decor-size-buttons">
-          <button type="button" class="small-btn" onclick="resizeSelectedDecorItem(-8)">- 작게</button>
-          <button type="button" class="small-btn" onclick="resizeSelectedDecorItem(8)">+ 크게</button>
+        <div class="decor-size-controls" aria-label="sticker size controls">
+          <span id="decorSizeStatus" class="decor-size-status">선택한 스티커 없음</span>
+          <div class="decor-size-buttons">
+            <button type="button" class="small-btn" onclick="resizeSelectedDecorItem(-8)">- 작게</button>
+            <button type="button" class="small-btn" onclick="resizeSelectedDecorItem(8)">+ 크게</button>
+          </div>
         </div>
-      </div>
-      <div id="decorThumbList" class="decor-thumb-list" aria-label="꾸미기 이미지 목록"></div>
+        <div id="decorThumbList" class="decor-thumb-list" aria-label="꾸미기 이미지 목록"></div>
       </div>
     </div>
 
