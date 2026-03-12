@@ -3,6 +3,7 @@ const CUSTOM_WORDS_KEY = "customWords";
 const CUSTOM_WORDS_SESSION_KEY = "customWordsSessionBackup";
 const SAVED_WORD_BOOKS_KEY = "savedWordBooks";
 const QUIZ_DIRECTION_KEY = "quizDirection";
+const OFFICE_MODE_KEY = "officeMode";
 let words = [];
 let baseWords = [];
 let currentWord = null;
@@ -18,6 +19,7 @@ let customWordsModalItemsOverride = null;
 let customWordsModalTitleText = "단어 목록";
 let wordBookModalMode = "shuffle";
 let quizDirection = localStorage.getItem(QUIZ_DIRECTION_KEY) === "word" ? "word" : "meaning";
+let isOfficeModeEnabled = localStorage.getItem(OFFICE_MODE_KEY) === "true";
 let totalAttempts = parseInt(localStorage.getItem("totalAttempts") || "0", 10);
 let correctAttempts = parseInt(localStorage.getItem("correctAttempts") || "0", 10);
 let studyTimerState = JSON.parse(localStorage.getItem("studyTimerState")) || {
@@ -60,6 +62,26 @@ function normalizeSavedWordBook(item) {
     name: String(item.name || "").trim() || `${date} 단어장`,
     words: wordsInBook
   };
+}
+
+function updateOfficeModeButton() {
+  const officeModeToggleBtn = document.getElementById("officeModeToggleBtn");
+  if (!officeModeToggleBtn) return;
+
+  officeModeToggleBtn.classList.toggle("is-active", isOfficeModeEnabled);
+  officeModeToggleBtn.setAttribute("aria-pressed", isOfficeModeEnabled ? "true" : "false");
+  officeModeToggleBtn.innerText = isOfficeModeEnabled ? "월루 모드 ON" : "월루 모드";
+}
+
+function applyOfficeMode() {
+  document.body.classList.toggle("office-mode", isOfficeModeEnabled);
+  updateOfficeModeButton();
+}
+
+function toggleOfficeMode() {
+  isOfficeModeEnabled = !isOfficeModeEnabled;
+  localStorage.setItem(OFFICE_MODE_KEY, isOfficeModeEnabled ? "true" : "false");
+  applyOfficeMode();
 }
 
 function getSavedWordBooks() {
@@ -300,6 +322,7 @@ function resetQuizStateWithPriorityWords(priorityWords, options = {}) {
 })();
 
 document.addEventListener("DOMContentLoaded", () => {
+  applyOfficeMode();
   showWelcomePopupIfNeeded();
   initializeStudyTimer();
   syncQuizSourceLabel();

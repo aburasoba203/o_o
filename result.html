@@ -32,6 +32,7 @@
   <script>
     const CUSTOM_WORDS_KEY = "customWords";
     const CUSTOM_WORDS_SESSION_KEY = "customWordsSessionBackup";
+    document.body.classList.toggle("office-mode", localStorage.getItem("officeMode") === "true");
     let wrongNoteItems = [];
 
     function parseJsonArray(raw) {

@@ -1,11 +1,12 @@
 (() => {
-  const PATCH_NOTICE_VERSION = "2026-03-12";
+  const PATCH_NOTICE_VERSION = "2026-03-12-1";
   const PATCH_NOTICE_STORAGE_KEY = "patchNotice:lastSeenVersion";
   const PATCH_NOTICE_TITLE = "패치 내용";
   const PATCH_NOTICE_ITEMS = [
     "단어 목록에서 단어 삭제/수정 기능 추가",
     "단어장 저장 범위 옵션 추가",
-    "괄호가 포함된 뜻 정답 처리 로직 개선"
+    "괄호가 포함된 뜻 정답 처리 로직 개선",
+    "월루모드 테마 추가(betaㅋㅋ)"
   ];
 
   function hasSeenCurrentNotice() {

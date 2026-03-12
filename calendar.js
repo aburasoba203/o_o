@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", async () => {
+  document.body.classList.toggle("office-mode", localStorage.getItem("officeMode") === "true");
   const calendarEl = document.getElementById("calendar");
   const ddaySummaryEl = document.getElementById("ddaySummary");
 
