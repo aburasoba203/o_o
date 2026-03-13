@@ -373,7 +373,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else {
       return;
     }
-
     persistAll();
     updateDdaySummary();
     rerenderEvents();
@@ -410,6 +409,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       persistAll();
       rerenderEvents();
       updateDdaySummary();
+      applyCalendarAction();
       return true;
     }
 
@@ -1068,6 +1068,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: "dayGridMonth",
+    timeZone: "Asia/Seoul",
     height: getCalendarHeight(),
     dayMaxEventRows: 3,
     moreLinkClick: "popover",

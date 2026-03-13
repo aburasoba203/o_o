@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>단어 퀴즈</title>
 </head>
-<body>
+<body class="quiz-page">
   <nav class="app-nav index-nav" aria-label="네비게이션">
     <div class="nav-links">
       <button class="shift-btn" disabled>단어장</button>
@@ -18,9 +18,17 @@
       <button class="mobile-hide-on-phone" onclick="endStudySession()">공부 종료</button>
     </div>
   </nav>
+  <div class="app-nav-subtools">
+    <label class="theme-toggle" for="officeModeToggleInput">
+      <input id="officeModeToggleInput" type="checkbox" onchange="toggleOfficeMode()" />
+      <span class="theme-toggle-ui" aria-hidden="true"></span>
+      <span class="theme-toggle-label">월루테마</span>
+    </label>
+  </div>
 
   <div class="container">
     <div class="top-bar">
+      <span id="modeStatusLabel" class="mode-status-label" hidden>오답모드</span>
       <span class="progress">진행: <span id="progress">0 / 0</span></span>
       <span class="progress" id="accuracy">정답률: 0% (0/0)</span>
       <div class="quiz-direction-toggle" role="tablist" aria-label="퀴즈 모드">
@@ -69,6 +77,7 @@
           </div>
         </div>
       </div>
+      <p id="hardModeWarning" class="hard-mode-warning" hidden>‼️☠️하드모드: 단어의 모든 뜻을 맞춰야 합니듀☠️‼️</p>
       <p id="quizSourceLabel" class="quiz-source-label">전체 단어</p>
       <h1 id="word">단어 마추기</h1>
 
@@ -81,8 +90,8 @@
     <div class="bottom-controls">
       <button onclick="setAllMode()">전체 모드</button>
       <button onclick="setWrongMode()">오답 모드</button>
-      <button onclick="openWordBookShuffleModal()">기간설정</button>
-      <button id="officeModeToggleBtn" type="button" onclick="toggleOfficeMode()" aria-pressed="false">월루 모드</button>
+      <button onclick="openWordBookShuffleModal()">기간선택</button>
+      <button id="hardModeToggleBtn" type="button" onclick="toggleHardMode()" aria-pressed="false">하드모드☠️</button>
     </div>
 
   </div>

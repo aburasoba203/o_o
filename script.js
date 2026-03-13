@@ -3,6 +3,7 @@ const CUSTOM_WORDS_KEY = "customWords";
 const CUSTOM_WORDS_SESSION_KEY = "customWordsSessionBackup";
 const SAVED_WORD_BOOKS_KEY = "savedWordBooks";
 const QUIZ_DIRECTION_KEY = "quizDirection";
+const HARD_MODE_KEY = "hardMode";
 const OFFICE_MODE_KEY = "officeMode";
 let words = [];
 let baseWords = [];
@@ -19,6 +20,7 @@ let customWordsModalItemsOverride = null;
 let customWordsModalTitleText = "단어 목록";
 let wordBookModalMode = "shuffle";
 let quizDirection = localStorage.getItem(QUIZ_DIRECTION_KEY) === "word" ? "word" : "meaning";
+let isHardModeEnabled = localStorage.getItem(HARD_MODE_KEY) === "true";
 let isOfficeModeEnabled = localStorage.getItem(OFFICE_MODE_KEY) === "true";
 let totalAttempts = parseInt(localStorage.getItem("totalAttempts") || "0", 10);
 let correctAttempts = parseInt(localStorage.getItem("correctAttempts") || "0", 10);
@@ -65,17 +67,45 @@ function normalizeSavedWordBook(item) {
 }
 
 function updateOfficeModeButton() {
-  const officeModeToggleBtn = document.getElementById("officeModeToggleBtn");
-  if (!officeModeToggleBtn) return;
+  const officeModeToggleInput = document.getElementById("officeModeToggleInput");
+  if (officeModeToggleInput) {
+    officeModeToggleInput.checked = isOfficeModeEnabled;
+  }
+}
 
-  officeModeToggleBtn.classList.toggle("is-active", isOfficeModeEnabled);
-  officeModeToggleBtn.setAttribute("aria-pressed", isOfficeModeEnabled ? "true" : "false");
-  officeModeToggleBtn.innerText = isOfficeModeEnabled ? "월루 모드 ON" : "월루 모드";
+function updateHardModeUI() {
+  const hardModeToggleBtn = document.getElementById("hardModeToggleBtn");
+  const hardModeWarning = document.getElementById("hardModeWarning");
+
+  if (hardModeToggleBtn) {
+    hardModeToggleBtn.classList.toggle("is-active", isHardModeEnabled);
+    hardModeToggleBtn.setAttribute("aria-pressed", isHardModeEnabled ? "true" : "false");
+    hardModeToggleBtn.innerText = isHardModeEnabled ? "하드모드 ON ☠️" : "하드모드☠️";
+  }
+
+  if (hardModeWarning) {
+    hardModeWarning.hidden = !isHardModeEnabled;
+  }
+
+  document.body.classList.toggle("hard-mode-theme", isHardModeEnabled && !isOfficeModeEnabled);
+}
+
+function toggleHardMode() {
+  isHardModeEnabled = !isHardModeEnabled;
+  if (isHardModeEnabled) {
+    quizDirection = "meaning";
+    localStorage.setItem(QUIZ_DIRECTION_KEY, quizDirection);
+  }
+  localStorage.setItem(HARD_MODE_KEY, isHardModeEnabled ? "true" : "false");
+  updateHardModeUI();
+  updateQuizDirectionUI();
+  showCurrentWord();
 }
 
 function applyOfficeMode() {
   document.body.classList.toggle("office-mode", isOfficeModeEnabled);
   updateOfficeModeButton();
+  updateHardModeUI();
 }
 
 function toggleOfficeMode() {
@@ -117,7 +147,18 @@ function getCurrentQuizWords() {
 function syncQuizSourceLabel() {
   const labelEl = document.getElementById("quizSourceLabel");
   if (!labelEl) return;
-  labelEl.innerText = activeQuizSourceLabel || "전체 단어";
+  labelEl.innerText = activeQuizWordNames ? "기간선택모드" : "전체모드";
+}
+
+function syncModeStatusLabel() {
+  const labelEl = document.getElementById("modeStatusLabel");
+  const topBarEl = document.querySelector(".top-bar");
+  if (!labelEl) return;
+  labelEl.hidden = mode !== "wrong";
+  labelEl.innerText = "오답모드";
+  if (topBarEl) {
+    topBarEl.classList.toggle("has-mode-status", mode === "wrong");
+  }
 }
 
 function updateQuizDirectionUI() {
@@ -128,6 +169,9 @@ function updateQuizDirectionUI() {
   if (toggleEl) toggleEl.setAttribute("data-direction", quizDirection);
   if (meaningBtn) meaningBtn.classList.toggle("is-active", quizDirection === "meaning");
   if (wordBtn) wordBtn.classList.toggle("is-active", quizDirection === "word");
+  if (meaningBtn) meaningBtn.disabled = isHardModeEnabled;
+  if (wordBtn) wordBtn.disabled = isHardModeEnabled;
+  if (toggleEl) toggleEl.classList.toggle("is-disabled", isHardModeEnabled);
   if (answerInput) {
     answerInput.placeholder = quizDirection === "meaning"
       ? "뜻을 입력해주세듀"
@@ -136,6 +180,7 @@ function updateQuizDirectionUI() {
 }
 
 function setQuizDirection(nextDirection) {
+  if (isHardModeEnabled) return;
   quizDirection = nextDirection === "word" ? "word" : "meaning";
   localStorage.setItem(QUIZ_DIRECTION_KEY, quizDirection);
   updateQuizDirectionUI();
@@ -257,6 +302,7 @@ function resetQuizStateWithCurrentWords() {
   wrongModePendingWords = [];
   shuffledWords = shuffleArray([...getCurrentQuizWords()]);
   saveProgress();
+  syncModeStatusLabel();
 
   const resultElement = document.getElementById("result");
   const answerInput = document.getElementById("answer");
@@ -281,6 +327,7 @@ function resetQuizStateWithPriorityWords(priorityWords, options = {}) {
     : shuffleArray(sourceWords.filter(item => !prioritySet.has(item.word)));
   shuffledWords = options.restrictToPriority ? randomizedPriorityWords : [...randomizedPriorityWords, ...restWords];
   saveProgress();
+  syncModeStatusLabel();
 
   const resultElement = document.getElementById("result");
   const answerInput = document.getElementById("answer");
@@ -322,10 +369,12 @@ function resetQuizStateWithPriorityWords(priorityWords, options = {}) {
 })();
 
 document.addEventListener("DOMContentLoaded", () => {
+  updateHardModeUI();
   applyOfficeMode();
   showWelcomePopupIfNeeded();
   initializeStudyTimer();
   syncQuizSourceLabel();
+  syncModeStatusLabel();
   updateQuizDirectionUI();
 
   const answerInput = document.getElementById("answer");
@@ -750,6 +799,20 @@ function parseMeaningInput(text) {
     .split(",")
     .map(item => normalizeMeaningText(item))
     .filter(Boolean);
+}
+
+function isHardModeMeaningAnswerCorrect(meanings, userInput) {
+  const userAnswers = [...new Set(parseMeaningInput(userInput))];
+  if (userAnswers.length === 0) return false;
+
+  const meaningVariantGroups = meanings.map(meaning => new Set(getMeaningAnswerVariants(meaning)));
+  const allowedAnswers = new Set(meaningVariantGroups.flatMap(group => [...group]));
+
+  if (userAnswers.some(answer => !allowedAnswers.has(answer))) {
+    return false;
+  }
+
+  return meaningVariantGroups.every(group => userAnswers.some(answer => group.has(answer)));
 }
 
 function parseWordImportText(text) {
@@ -1429,6 +1492,8 @@ function setAllMode() {
   shuffledWords = shuffleArray([...getCurrentQuizWords()]);
   currentIndex = 0;
   saveProgress();
+  syncQuizSourceLabel();
+  syncModeStatusLabel();
   document.getElementById("result").innerText = "";
   document.getElementById("answer").value = "";
   isChecking = false;
@@ -1448,6 +1513,7 @@ function setWrongMode() {
 
   shuffledWords = shuffleArray([...wrongOnlyWords]);
   currentIndex = 0;
+  syncModeStatusLabel();
   document.getElementById("result").innerText = "";
   document.getElementById("answer").value = "";
   isChecking = false;
@@ -1528,13 +1594,17 @@ function checkAnswer() {
 
   let isCorrect = false;
   if (quizDirection === "meaning") {
-    const normalizedCorrectMeanings = new Set(
-      currentWord.meanings.flatMap(getMeaningAnswerVariants)
-    );
-    const userAnswers = parseMeaningInput(userInput);
-    isCorrect =
-      userAnswers.length > 0 &&
-      userAnswers.every(answer => normalizedCorrectMeanings.has(answer));
+    if (isHardModeEnabled) {
+      isCorrect = isHardModeMeaningAnswerCorrect(currentWord.meanings, userInput);
+    } else {
+      const normalizedCorrectMeanings = new Set(
+        currentWord.meanings.flatMap(getMeaningAnswerVariants)
+      );
+      const userAnswers = parseMeaningInput(userInput);
+      isCorrect =
+        userAnswers.length > 0 &&
+        userAnswers.every(answer => normalizedCorrectMeanings.has(answer));
+    }
   } else {
     const normalizedCorrectWord = normalizeWordAnswer(currentWord.word);
     const userAnswers = parseWordInput(userInput);
