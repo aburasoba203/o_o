@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>루틴</title>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-KMRQDHLKZE"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-KMRQDHLKZE');
+  </script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="calendar-page routine-page">
+  <nav class="app-nav index-nav" aria-label="네비게이션">
+    <div class="nav-links">
+      <button class="shift-btn" onclick="location.href='index.html'">단어장</button>
+      <button class="shift-btn" onclick="location.href='calendar.html'">캘린더</button>
+      <button class="shift-btn" disabled>루틴</button>
+    </div>
+    <div class="nav-tools">
+      <button id="studyTimerActionBtn" class="mobile-hide-on-phone" onclick="handleStudyTimerActionButtonClick()">순공 타이머 시작</button>
+      <button id="studyTimerDisplay" class="timer-chip mobile-hide-on-phone" onclick="handleTimerDisplayClick()">순공 00:00:00</button>
+      <button class="mobile-hide-on-phone" onclick="endStudySession()">공부 종료</button>
+    </div>
+  </nav>
+
+  <div class="container calendar-container routine-container">
+    <div class="calendar-title-row routine-title-row">
+      <div>
+        <h1>루틴</h1>
+      </div>
+    </div>
+    <div id="routineNowBanner" class="routine-now-banner" aria-live="polite">지금은 쉬는 시간입니두.</div>
+    <label class="routine-live-toggle" for="routineBannerToggleInput">
+      <input id="routineBannerToggleInput" type="checkbox" checked>
+      <span class="routine-live-toggle-dot" aria-hidden="true"></span>
+      <span>현재 루틴 표시</span>
+    </label>
+
+    <section class="routine-week-card" aria-labelledby="routineWeekTitle">
+      <div class="routine-card-head">
+        <h2 id="routineWeekTitle">요일 루틴</h2>
+        <div class="routine-week-actions">
+          <button type="button" class="small-btn" id="openRoutineModalBtn">루틴 추가하기</button>
+          <button type="button" class="small-btn danger" id="clearDayRoutinesBtn">현재 요일 전체 삭제</button>
+        </div>
+      </div>
+      <div id="routineWeekTabs" class="routine-week-tabs" role="tablist" aria-label="요일 선택"></div>
+    </section>
+
+    <div class="routine-layout">
+      <section class="routine-visual-card" aria-labelledby="routineWheelTitle">
+        <div class="routine-card-head">
+          <div>
+            <h2 id="routineWheelTitle">원형 시간표</h2>
+            <p id="routineDayStatus" class="routine-day-status">월요일 루틴</p>
+          </div>
+        </div>
+        <div class="routine-wheel-wrap">
+          <svg class="routine-wheel" viewBox="0 0 360 360" role="img" aria-label="24시간 원형 루틴 시간표"></svg>
+        </div>
+        <p class="calendar-help routine-help">현재 시간은 선으로 표시됩니다. 루틴 조각이나 이름을 누르면 수정 창이 열립니다.</p>
+      </section>
+
+      <section class="routine-editor-stack">
+        <section class="routine-guide-card" aria-labelledby="routineGuideTitle">
+          <div class="routine-card-head">
+            <h2 id="routineGuideTitle">편집 방식</h2>
+          </div>
+          <p class="routine-guide-text">'루틴 추가하기'를 누르면 설정창이 열립니듀.</p>
+          <p class="routine-guide-text">시간은 팝업 안 원형 시계의 시작/종료 핸들을 드래그해서 정하시소.</p>
+          <p class="routine-guide-text">같은 요일 안에서는 시간이 겹치는 루틴을 저장할 수 없습니두!</p>
+        </section>
+      </section>
+    </div>
+  </div>
+
+  <div id="routineModalOverlay" class="routine-modal-overlay" hidden>
+    <div class="routine-modal-card" role="dialog" aria-modal="true" aria-labelledby="routineModalTitle">
+      <button type="button" class="modal-close-btn" id="closeRoutineModalBtn" aria-label="닫기">×</button>
+      <div class="routine-card-head">
+        <h2 id="routineModalTitle">루틴 추가</h2>
+      </div>
+      <form id="routineForm" class="routine-form-card routine-form-modal" autocomplete="off">
+        <label>
+          루틴 이름
+          <input type="text" id="routineTitleInput" maxlength="30" placeholder="예: 아침 운동" required>
+        </label>
+        <div class="routine-picker-summary">
+          <strong id="routineDraftTimeText">07:00 - 08:00</strong>
+          <span id="routineDraftDurationText">1시간 0분</span>
+        </div>
+        <div class="routine-picker-wrap">
+          <svg class="routine-picker-wheel" viewBox="0 0 360 360" role="img" aria-label="루틴 시간 설정 원형 시계"></svg>
+        </div>
+        <div class="routine-picker-hint">시작점과 종료점을 드래그해서 시간을 정하세됴~.~</div>
+        <label>
+          색상
+          <div class="routine-color-row">
+            <input type="color" id="routineColorInput" value="#ffc6d9">
+            <div id="routineColorPresets" class="routine-color-presets" aria-label="추천 색상"></div>
+          </div>
+        </label>
+        <label>
+          한 줄 메모
+          <input type="text" id="routineNoteInput" maxlength="50" placeholder="예: 스트레칭 10분 포함">
+        </label>
+        <div class="word-import-actions routine-form-actions">
+          <button type="submit" id="routineSubmitBtn">루틴 저장</button>
+          <button type="button" class="small-btn danger" id="deleteSelectedRoutineBtn" hidden>삭제</button>
+        </div>
+      </form>
+      <section class="routine-modal-list-card" aria-labelledby="routineModalListTitle">
+        <div class="routine-card-head">
+          <h2 id="routineModalListTitle">현재 요일 루틴</h2>
+        </div>
+        <div id="routineModalDayList" class="routine-modal-day-list" aria-live="polite"></div>
+      </section>
+    </div>
+  </div>
+
+  <script src="help-modal.js"></script>
+  <script src="patch-notice.js"></script>
+  <script src="todo-widget.js"></script>
+  <script src="routine.js"></script>
+  <script src="timer-nav.js"></script>
+</body>
+</html>

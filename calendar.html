@@ -22,6 +22,7 @@
     <div class="nav-links">
       <button class="shift-btn" onclick="location.href='index.html'">단어장</button>
       <button class="shift-btn" disabled>캘린더</button>
+      <button class="shift-btn" onclick="location.href='routine.html'">루틴</button>
     </div>
     <div class="nav-tools">
       <button id="studyTimerActionBtn" class="mobile-hide-on-phone" onclick="handleStudyTimerActionButtonClick()">순공 타이머 시작</button>
@@ -47,11 +48,11 @@
       <button type="button" class="mobile-purpose-tab" data-mobile-purpose="decor" role="tab" aria-selected="false">꾸미기</button>
     </div>
 
-    <div id="ddaySummary" class="dday-summary">시험 일정이 없습니다.</div>
+    <div id="ddaySummary" class="dday-summary">다가오는 일정이 없습니다.</div>
     <p class="calendar-help">날짜를 클릭하면 공부/시험 일정을 추가할 수 있습니다.</p>
 
     <div id="decorPaletteOverlay" class="decor-palette-overlay" hidden>
-      <div id="decorPalette" class="decor-palette decor-palette-popup" role="dialog" aria-modal="true" aria-label="꾸미기 패널">
+      <div id="decorPalette" class="decor-palette decor-palette-popup" role="dialog" aria-modal="true" aria-label="꾸미기 선택">
         <div class="decor-palette-head">
           <span>꾸미기</span>
           <div class="decor-palette-actions">
@@ -60,7 +61,7 @@
           </div>
         </div>
         <div class="decor-size-controls" aria-label="sticker size controls">
-          <span id="decorSizeStatus" class="decor-size-status">선택한 스티커 없음</span>
+          <span id="decorSizeStatus" class="decor-size-status">선택된 스티커가 없습니다</span>
           <div class="decor-size-buttons">
             <button type="button" class="small-btn" onclick="resizeSelectedDecorItem(-8)">- 작게</button>
             <button type="button" class="small-btn" onclick="resizeSelectedDecorItem(8)">+ 크게</button>
@@ -79,6 +80,7 @@
   <script src="help-modal.js"></script>
   <script src="patch-notice.js"></script>
   <script src="todo-widget.js"></script>
+  <script src="routine-now-banner.js"></script>
   <script src="calendar.js"></script>
   <script src="timer-nav.js"></script>
 </body>
