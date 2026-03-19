@@ -290,7 +290,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       .sort((a, b) => a.dateObj - b.dateObj);
 
     if (upcomingExams.length === 0) {
-      ddaySummaryEl.innerText = "시험 일정이 없습니다.";
+      ddaySummaryEl.innerText = "시험 일정이 없습니디.";
       return;
     }
 

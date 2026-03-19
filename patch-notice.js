@@ -1,11 +1,10 @@
 (() => {
   const PATCH_NOTICE_VERSION = "2026-03-17";
   const PATCH_NOTICE_STORAGE_KEY = "patchNotice:lastSeenVersion";
-  const PATCH_NOTICE_TITLE = "3월 17일 패치 내용";
+  const PATCH_NOTICE_TITLE = "3월 19일 패치 내용";
   const PATCH_NOTICE_ITEMS = [
-    "하드모드 추가",
-    "월루테마 추가(beta)",
-    "🆕루틴 설정 기능"
+    "루틴 설정 기능",
+    "🆕단어장 저장 기능 개선"
   ];
 
   function hasSeenCurrentNotice() {
