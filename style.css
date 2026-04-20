@@ -1649,6 +1649,51 @@ body.hard-mode-theme .wrong {
   color: #fff5fb;
   border-radius: 10px;
   font-weight: 700;
+  position: relative;
+}
+
+.dday-summary-list {
+  display: grid;
+  gap: 6px;
+}
+
+.dday-summary-row {
+  min-width: 0;
+}
+
+.dday-summary-row-first {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dday-summary-item-text {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.dday-summary-inline-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.dday-summary-page {
+  min-width: 48px;
+  text-align: center;
+}
+
+.dday-summary-nav {
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
 }
 
 .calendar-help {

@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let decorPinchState = null;
   let selectedDecorItemId = null;
   let calendar = null;
+  let examSummaryPage = 0;
   let calendarViewMode = localStorage.getItem(CALENDAR_VIEW_MODE_KEY) === "week" ? "week" : "month";
   let calendarViewAnchors = JSON.parse(localStorage.getItem(CALENDAR_VIEW_ANCHORS_KEY) || "null") || {};
   let currentMobilePurposeTab = localStorage.getItem(MOBILE_PURPOSE_TAB_KEY) || "calendar";
@@ -289,19 +290,42 @@ document.addEventListener("DOMContentLoaded", async () => {
       .filter(item => !Number.isNaN(item.dateObj.getTime()) && item.dateObj >= today)
       .sort((a, b) => a.dateObj - b.dateObj);
 
+    const pageSize = 5;
+    const maxPage = Math.max(0, Math.ceil(upcomingExams.length / pageSize) - 1);
+    examSummaryPage = Math.min(examSummaryPage, maxPage);
+
     if (upcomingExams.length === 0) {
       ddaySummaryEl.innerText = "시험 일정이 없습니디.";
       return;
     }
 
-    ddaySummaryEl.innerHTML = upcomingExams
-      .slice(0, 5)
-      .map(exam => {
+    const prevDisabled = examSummaryPage <= 0 ? "disabled" : "";
+    const nextDisabled = examSummaryPage >= maxPage ? "disabled" : "";
+
+    const visibleExamItems = upcomingExams
+      .slice(examSummaryPage * pageSize, (examSummaryPage + 1) * pageSize)
+      .map((exam, index) => {
         const dayDiff = Math.round((exam.dateObj - today) / (1000 * 60 * 60 * 24));
         const ddayLabel = dayDiff === 0 ? "D-Day" : `D-${dayDiff}`;
-        return `<div>${ddayLabel} | ${exam.name} (${exam.date})</div>`;
-      })
-      .join("");
+        const text = `${ddayLabel} | ${exam.name} (${exam.date})`;
+        if (index === 0) {
+          return `
+            <div class="dday-summary-row dday-summary-row-first">
+              <span class="dday-summary-item-text">${text}</span>
+              <span class="dday-summary-inline-nav">
+                <button type="button" class="dday-summary-nav" data-exam-page-move="-1" aria-label="이전 시험 목록" ${prevDisabled}>&lt;</button>
+                <span class="dday-summary-page">${examSummaryPage + 1} / ${maxPage + 1}</span>
+                <button type="button" class="dday-summary-nav" data-exam-page-move="1" aria-label="다음 시험 목록" ${nextDisabled}>&gt;</button>
+              </span>
+            </div>
+          `;
+        }
+        return `<div class="dday-summary-row">${text}</div>`;
+      });
+
+    ddaySummaryEl.innerHTML = `
+      <div class="dday-summary-list">${visibleExamItems.join("")}</div>
+    `;
   }
 
   function persistAll() {
@@ -612,7 +636,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function syncCalendarHeight() {
     if (!calendar) return;
     syncCalendarTitleFormat();
-    calendar.setOption("height", getCalendarHeight());
+    calendar.updateSize();
     decorItems.forEach(clampDecorItem);
     renderDecorItems();
   }
@@ -1106,7 +1130,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: "dayGridMonth",
     timeZone: "Asia/Seoul",
-    height: getCalendarHeight(),
+    height: "auto",
+    contentHeight: "auto",
     dayMaxEventRows: false,
     moreLinkClick: "popover",
     firstDay: 1,
@@ -1165,6 +1190,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const button = event.target.closest("button[data-mobile-purpose]");
     if (!button) return;
     setMobilePurposeTab(button.dataset.mobilePurpose || "calendar");
+  });
+  ddaySummaryEl?.addEventListener("click", event => {
+    const button = event.target.closest("button[data-exam-page-move]");
+    if (!button) return;
+    const move = parseInt(button.dataset.examPageMove || "0", 10);
+    if (!Number.isFinite(move) || move === 0) return;
+    examSummaryPage = Math.max(0, examSummaryPage + move);
+    updateDdaySummary();
   });
 
   window.addEventListener("todo:changed", rerenderEvents);
