@@ -636,7 +636,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function syncCalendarHeight() {
     if (!calendar) return;
     syncCalendarTitleFormat();
-    calendar.updateSize();
+    calendar.setOption("height", getCalendarHeight());
     decorItems.forEach(clampDecorItem);
     renderDecorItems();
   }
@@ -1130,8 +1130,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: "dayGridMonth",
     timeZone: "Asia/Seoul",
-    height: "auto",
-    contentHeight: "auto",
+    height: getCalendarHeight(),
     dayMaxEventRows: false,
     moreLinkClick: "popover",
     firstDay: 1,
