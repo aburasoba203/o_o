@@ -6,6 +6,8 @@ const WRONG_WORD_HISTORY_KEY = "wrongWordHistoryByDate";
 const QUIZ_DIRECTION_KEY = "quizDirection";
 const HARD_MODE_KEY = "hardMode";
 const OFFICE_MODE_KEY = "officeMode";
+const ACCURACY_STORAGE_KEY_ALL = "accuracyStatsAll";
+const ACCURACY_STORAGE_KEY_WRONG = "accuracyStatsWrong";
 let words = [];
 let baseWords = [];
 let currentWord = null;
@@ -23,8 +25,7 @@ let wordBookModalMode = "shuffle";
 let quizDirection = localStorage.getItem(QUIZ_DIRECTION_KEY) === "word" ? "word" : "meaning";
 let isHardModeEnabled = localStorage.getItem(HARD_MODE_KEY) === "true";
 let isOfficeModeEnabled = localStorage.getItem(OFFICE_MODE_KEY) === "true";
-let totalAttempts = parseInt(localStorage.getItem("totalAttempts") || "0", 10);
-let correctAttempts = parseInt(localStorage.getItem("correctAttempts") || "0", 10);
+let accuracyStats = loadAccuracyStats();
 let studyTimerState = JSON.parse(localStorage.getItem("studyTimerState")) || {
   date: null,
   elapsedMs: 0,
@@ -35,6 +36,37 @@ localStorage.removeItem("correctWords");
 
 // 기존 저장된 데이터 불러오기
 let wrongWords = JSON.parse(localStorage.getItem("wrongWords")) || [];
+
+function parseAccuracyStats(raw, fallback = { total: 0, correct: 0 }) {
+  try {
+    const parsed = JSON.parse(raw || "null");
+    return {
+      total: Math.max(0, parseInt(parsed?.total, 10) || 0),
+      correct: Math.max(0, parseInt(parsed?.correct, 10) || 0)
+    };
+  } catch (_) {
+    return {
+      total: Math.max(0, parseInt(fallback?.total, 10) || 0),
+      correct: Math.max(0, parseInt(fallback?.correct, 10) || 0)
+    };
+  }
+}
+
+function loadAccuracyStats() {
+  const legacyTotal = Math.max(0, parseInt(localStorage.getItem("totalAttempts") || "0", 10) || 0);
+  const legacyCorrect = Math.max(0, parseInt(localStorage.getItem("correctAttempts") || "0", 10) || 0);
+  return {
+    all: parseAccuracyStats(localStorage.getItem(ACCURACY_STORAGE_KEY_ALL), {
+      total: legacyTotal,
+      correct: legacyCorrect
+    }),
+    wrong: parseAccuracyStats(localStorage.getItem(ACCURACY_STORAGE_KEY_WRONG))
+  };
+}
+
+function getAccuracyStatsForCurrentMode() {
+  return mode === "wrong" ? accuracyStats.wrong : accuracyStats.all;
+}
 
 function isValidDateString(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
@@ -1521,22 +1553,26 @@ function resetCustomWords() {
 }
 
 function saveAccuracy() {
-  localStorage.setItem("totalAttempts", totalAttempts);
-  localStorage.setItem("correctAttempts", correctAttempts);
+  localStorage.setItem(ACCURACY_STORAGE_KEY_ALL, JSON.stringify(accuracyStats.all));
+  localStorage.setItem(ACCURACY_STORAGE_KEY_WRONG, JSON.stringify(accuracyStats.wrong));
+  localStorage.setItem("totalAttempts", String(accuracyStats.all.total));
+  localStorage.setItem("correctAttempts", String(accuracyStats.all.correct));
 }
 
 function updateAccuracy() {
   const accuracyElement = document.getElementById("accuracy");
   if (!accuracyElement) return;
+  const currentStats = getAccuracyStatsForCurrentMode();
+  const label = mode === "wrong" ? "오답모드 정답률" : "정답률";
 
-  if (totalAttempts === 0) {
-    accuracyElement.innerText = "정답률: 0% (0/0)";
+  if (currentStats.total === 0) {
+    accuracyElement.innerText = `${label}: 0% (0/0)`;
     return;
   }
 
-  const accuracy = Math.round((correctAttempts / totalAttempts) * 100);
+  const accuracy = Math.round((currentStats.correct / currentStats.total) * 100);
   accuracyElement.innerText =
-    `정답률: ${accuracy}% (${correctAttempts}/${totalAttempts})`;
+    `${label}: ${accuracy}% (${currentStats.correct}/${currentStats.total})`;
 }
 
 function getWordsByWordList(wordList) {
@@ -1632,6 +1668,7 @@ function setAllMode() {
   document.getElementById("result").innerText = "";
   document.getElementById("answer").value = "";
   isChecking = false;
+  updateAccuracy();
   showCurrentWord();
   document.getElementById("answer").focus();
 }
@@ -1652,6 +1689,7 @@ function setWrongMode() {
   document.getElementById("result").innerText = "";
   document.getElementById("answer").value = "";
   isChecking = false;
+  updateAccuracy();
   showCurrentWord();
   document.getElementById("answer").focus();
 }
@@ -1750,7 +1788,7 @@ function checkAnswer() {
 
   if (isCorrect) {
     result.innerText = "정답입니두 😎";
-    correctAttempts++;
+    getAccuracyStatsForCurrentMode().correct++;
 
     if (mode === "wrong") {
       wrongModePendingWords = wrongModePendingWords.filter(word => word !== currentWord.word);
@@ -1764,7 +1802,7 @@ function checkAnswer() {
     }
     recordWrongWordForToday(currentWord.word);
   }
-  totalAttempts++;
+  getAccuracyStatsForCurrentMode().total++;
   saveAccuracy();
   updateAccuracy();
 
@@ -1795,13 +1833,17 @@ function resetProgress() {
   shuffledWords = shuffleArray([...getCurrentQuizWords()]);
   wrongWords = [];
   wrongModePendingWords = [];
-  totalAttempts = 0;
-  correctAttempts = 0;
+  accuracyStats = {
+    all: { total: 0, correct: 0 },
+    wrong: { total: 0, correct: 0 }
+  };
 
   // localStorage 정리
   localStorage.removeItem("shuffledWords");
   localStorage.removeItem("currentIndex");
   localStorage.removeItem("wrongWords");
+  localStorage.removeItem(ACCURACY_STORAGE_KEY_ALL);
+  localStorage.removeItem(ACCURACY_STORAGE_KEY_WRONG);
   localStorage.removeItem("totalAttempts");
   localStorage.removeItem("correctAttempts");
   saveProgress();

@@ -28,6 +28,7 @@
 
   <div class="container">
     <div class="word-import-modal custom-words-modal result-note-modal" role="region" aria-label="오답노트">
+      <button type="button" class="modal-close-btn" aria-label="닫기" onclick="closeWrongNotePage()">×</button>
       <h2>오답노트</h2>
       <div class="word-import-actions result-note-actions">
         <button type="button" onclick="copyWrongWords()">복사하기</button>
@@ -158,7 +159,16 @@
       await copyText(buildWordExportText(wrongNoteItems), "오답노트 복사 완료!");
     }
 
+    function closeWrongNotePage() {
+      if (window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+      location.href = "index.html";
+    }
+
     window.copyWrongWords = copyWrongWords;
+    window.closeWrongNotePage = closeWrongNotePage;
 
     (async () => {
       const wrongWords = parseJsonArray(localStorage.getItem("wrongWords"));

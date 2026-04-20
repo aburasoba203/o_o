@@ -247,7 +247,10 @@
     overlay.innerHTML = `
       <div class="calendar-modal todo-widget-modal" role="dialog" aria-modal="true" aria-label="TO-DO">
         <button type="button" class="todo-widget-close-btn" id="todoWidgetCloseBtn" aria-label="닫기">×</button>
-        <p class="calendar-modal-title todo-widget-title">To-Do List</p>
+        <div class="todo-widget-header">
+          <p class="calendar-modal-title todo-widget-title">To-Do List</p>
+          <button type="button" class="todo-widget-add-btn" id="todoWidgetAddBtn" aria-label="TO-DO 추가">+</button>
+        </div>
         <div class="todo-list-head">
           <span></span>
           <span></span>
@@ -263,6 +266,13 @@
     });
 
     overlay.querySelector("#todoWidgetCloseBtn")?.addEventListener("click", closeTodoOverlay);
+    overlay.querySelector("#todoWidgetAddBtn")?.addEventListener("click", () => {
+      const added = promptAndAddTodoItem();
+      if (added) {
+        renderTodoList(overlay.querySelector("#todoWidgetList"));
+        updateFabVisibility();
+      }
+    });
     document.body.appendChild(overlay);
     renderTodoList(overlay.querySelector("#todoWidgetList"));
     updateFabVisibility();

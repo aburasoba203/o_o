@@ -415,7 +415,8 @@ body.office-mode .app-nav {
   }
 
   .calendar-page {
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   .calendar-container {
@@ -1586,14 +1587,15 @@ body.hard-mode-theme .wrong {
 .calendar-page {
   display: block;
   min-height: 100vh;
-  height: 100vh;
+  height: auto;
   padding: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .calendar-container {
   width: min(960px, calc(100% - 24px));
-  margin: 8px auto 0;
+  margin: 8px auto 28px;
 }
 
 .calendar-container h1 {
@@ -1664,6 +1666,7 @@ body.hard-mode-theme .wrong {
 
 .calendar-stage {
   position: relative;
+  margin-bottom: 20px;
 }
 
 .calendar-decor-layer {
@@ -2079,6 +2082,40 @@ body.hard-mode-theme .wrong {
   font-size: 30px;
   margin: 0 0 8px;
   padding-right: 40px;
+}
+
+.todo-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding-right: 40px;
+}
+
+.todo-widget-header .todo-widget-title {
+  margin: 0;
+  padding-right: 0;
+}
+
+.todo-widget-add-btn {
+  min-width: 32px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 22px;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.55);
+  color: #2a7a18;
+  border: 1px solid rgba(42, 122, 24, 0.2);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.todo-widget-add-btn:hover {
+  background: rgba(255, 255, 255, 0.72);
+  opacity: 1;
 }
 
 .todo-list-head {

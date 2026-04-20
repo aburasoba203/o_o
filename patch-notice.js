@@ -1,10 +1,12 @@
 (() => {
-  const PATCH_NOTICE_VERSION = "2026-03-17";
+  const PATCH_NOTICE_VERSION = "2026-04-20";
   const PATCH_NOTICE_STORAGE_KEY = "patchNotice:lastSeenVersion";
-  const PATCH_NOTICE_TITLE = "3월 19일 패치 내용";
+  const PATCH_NOTICE_TITLE = "4월 20일 패치 내용";
   const PATCH_NOTICE_ITEMS = [
-    "루틴 설정 기능",
-    "🆕단어장 저장 기능 개선"
+    "오답노트 닫기 버튼 추가",
+    "정답률 계산 로직 수정",
+    "캘린더 페이지 반응형 UI/UX 수정",
+    "To-Do List To-Do 등록 버튼 추가"
   ];
 
   function hasSeenCurrentNotice() {

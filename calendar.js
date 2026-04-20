@@ -322,6 +322,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   function rerenderEvents() {
     calendar.removeAllEvents();
     buildEvents().forEach(event => calendar.addEvent(event));
+    syncCalendarHeight();
+    updateDdaySummary();
     refreshAttendanceStyles();
   }
 
@@ -551,13 +553,48 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function getCalendarHeight() {
     let reservedHeight = 220; // nav + title + summary + helper text + margins
+    let bottomGap = 48;
     if (isPortraitMobile()) {
       reservedHeight = 210;
+      bottomGap = 28;
     }
     const viewportHeight = window.visualViewport
       ? Math.floor(window.visualViewport.height)
       : window.innerHeight;
-    return Math.max(380, viewportHeight - reservedHeight);
+    const baseHeight = Math.max(340, viewportHeight - reservedHeight - bottomGap);
+    return baseHeight + getCalendarExtraHeight();
+  }
+
+  function getCalendarExtraHeight() {
+    const events = buildEvents();
+    const countsByDate = new Map();
+    events.forEach(event => {
+      const dateKey = String(event?.start || "").slice(0, 10);
+      if (!dateKey) return;
+      countsByDate.set(dateKey, (countsByDate.get(dateKey) || 0) + 1);
+    });
+
+    const baseDate = calendar ? calendar.getDate() : getTodayDateOnly();
+    if (calendarViewMode === "week") {
+      const weekStart = getWeekStartDate(baseDate);
+      let maxEventsPerDay = 0;
+      for (let i = 0; i < 7; i++) {
+        const cursor = new Date(weekStart);
+        cursor.setDate(weekStart.getDate() + i);
+        const dateKey = formatDateKey(cursor);
+        maxEventsPerDay = Math.max(maxEventsPerDay, countsByDate.get(dateKey) || 0);
+      }
+      return Math.max(0, maxEventsPerDay - 3) * 18;
+    }
+
+    const monthKey = formatMonthKey(baseDate);
+    let maxEventsPerDay = 0;
+    countsByDate.forEach((count, dateKey) => {
+      if (dateKey.slice(0, 7) !== monthKey) return;
+      maxEventsPerDay = Math.max(maxEventsPerDay, count);
+    });
+
+    return Math.max(0, maxEventsPerDay - 3) * 28;
   }
 
   function getCalendarTitleFormat() {
@@ -1070,7 +1107,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     initialView: "dayGridMonth",
     timeZone: "Asia/Seoul",
     height: getCalendarHeight(),
-    dayMaxEventRows: 3,
+    dayMaxEventRows: false,
     moreLinkClick: "popover",
     firstDay: 1,
     selectable: true,
