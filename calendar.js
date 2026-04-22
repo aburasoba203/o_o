@@ -576,16 +576,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function getCalendarHeight() {
-    let reservedHeight = 220; // nav + title + summary + helper text + margins
-    let bottomGap = 48;
-    if (isPortraitMobile()) {
-      reservedHeight = 210;
-      bottomGap = 28;
-    }
     const viewportHeight = window.visualViewport
       ? Math.floor(window.visualViewport.height)
       : window.innerHeight;
-    const baseHeight = Math.max(340, viewportHeight - reservedHeight - bottomGap);
+    const stageTop = getCalendarStage()?.getBoundingClientRect().top ?? 240;
+    const bottomGap = isPortraitMobile() ? 128 : 112;
+    const minHeight = calendarViewMode === "week"
+      ? (isPortraitMobile() ? 340 : 420)
+      : (isPortraitMobile() ? 420 : 520);
+    const baseHeight = Math.max(minHeight, Math.floor(viewportHeight - stageTop - bottomGap));
     return baseHeight + getCalendarExtraHeight();
   }
 
